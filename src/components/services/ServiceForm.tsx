@@ -24,7 +24,6 @@ import { useNavigate } from 'react-router-dom';
 const formSchema = z.object({
   name: z.string().min(3, { message: 'Nome deve ter pelo menos 3 caracteres' }),
   duration: z.coerce.number().min(5, { message: 'Duração mínima de 5 minutos' }),
-  price: z.coerce.number().min(0, { message: 'Preço não pode ser negativo' }),
   description: z.string().min(5, { message: 'Descrição deve ter pelo menos 5 caracteres' }),
   active: z.boolean().default(true),
 });
@@ -43,7 +42,6 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData }) => {
     defaultValues: initialData || {
       name: '',
       duration: 30,
-      price: 0,
       description: '',
       active: true,
     }
@@ -101,34 +99,19 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData }) => {
                   </FormItem>
                 )}
               />
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="duration"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Duração (minutos)</FormLabel>
-                      <FormControl>
-                        <Input type="number" min="5" step="5" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Valor (R$)</FormLabel>
-                      <FormControl>
-                        <Input type="number" min="0" step="0.01" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="duration"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Duração (minutos)</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="5" step="5" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             <FormField

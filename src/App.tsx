@@ -12,6 +12,7 @@ import PatientsPage from "./pages/PatientsPage";
 import PatientFormPage from "./pages/PatientFormPage";
 import ServicesPage from "./pages/ServicesPage";
 import ServiceFormPage from "./pages/ServiceFormPage";
+import AboutPage from "./pages/AboutPage";
 import NotFound from "./pages/NotFound";
 
 import { cn } from "@/lib/utils";
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="services" element={<ServicesPage />} />
             <Route path="services/new" element={<ServiceFormPage />} />
             <Route path="services/edit/:id" element={<ServiceFormPage />} />
+            <Route path="about" element={<AboutPage />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

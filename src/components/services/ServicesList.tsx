@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Search, MoreVertical, Plus, Clock } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 // Mockup de dados para os tipos de atendimento
 const mockServices = [
@@ -28,41 +29,43 @@ const mockServices = [
     id: '1', 
     name: 'Limpeza', 
     duration: 60,
-    price: 150.00,
     description: 'Limpeza dental completa com remoção de tártaro',
     status: 'active'
   },
   { 
     id: '2', 
-    name: 'Canal', 
+    name: 'Clareamento Dental', 
     duration: 90,
-    price: 600.00,
-    description: 'Tratamento de canal em sessão única',
+    description: 'Procedimento estético para clarear os dentes',
     status: 'active'
   },
   { 
     id: '3', 
-    name: 'Avaliação', 
-    duration: 30,
-    price: 100.00,
-    description: 'Consulta de avaliação inicial',
+    name: 'Avaliação Invisalign', 
+    duration: 45,
+    description: 'Consulta para avaliação de tratamento com alinhadores transparentes',
     status: 'active'
   },
   { 
     id: '4', 
-    name: 'Implante', 
-    duration: 120,
-    price: 1500.00,
-    description: 'Implante dental unitário',
+    name: 'Botox', 
+    duration: 60,
+    description: 'Aplicação de toxina botulínica para fins estéticos e terapêuticos',
     status: 'active'
   },
   { 
     id: '5', 
-    name: 'Clareamento', 
+    name: 'Preenchimento', 
     duration: 60,
-    price: 350.00,
-    description: 'Clareamento dental a laser',
-    status: 'inactive'
+    description: 'Preenchimento facial com ácido hialurônico',
+    status: 'active'
+  },
+  { 
+    id: '6', 
+    name: 'Manutenção Invisalign', 
+    duration: 30,
+    description: 'Consulta de acompanhamento do tratamento com Invisalign',
+    status: 'active'
   },
 ];
 
@@ -82,9 +85,11 @@ const ServicesList: React.FC = () => {
           <CardTitle>Tipos de Atendimento</CardTitle>
           <CardDescription>Gerenciamento de serviços e procedimentos</CardDescription>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Serviço
+        <Button asChild>
+          <Link to="/services/new">
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Serviço
+          </Link>
         </Button>
       </CardHeader>
       <CardContent>
@@ -107,7 +112,6 @@ const ServicesList: React.FC = () => {
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Duração</TableHead>
-                <TableHead>Valor</TableHead>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="w-[80px]"></TableHead>
@@ -126,7 +130,6 @@ const ServicesList: React.FC = () => {
                         <span>{service.duration} min</span>
                       </div>
                     </TableCell>
-                    <TableCell>R$ {service.price.toFixed(2)}</TableCell>
                     <TableCell className="max-w-xs truncate">{service.description}</TableCell>
                     <TableCell>
                       <Badge variant={service.status === 'active' ? 'default' : 'outline'}>
@@ -144,7 +147,9 @@ const ServicesList: React.FC = () => {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Ações</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem>Editar</DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link to={`/services/edit/${service.id}`}>Editar</Link>
+                          </DropdownMenuItem>
                           <DropdownMenuItem>
                             {service.status === 'active' ? 'Desativar' : 'Ativar'}
                           </DropdownMenuItem>
@@ -159,7 +164,7 @@ const ServicesList: React.FC = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-6">
+                  <TableCell colSpan={5} className="text-center py-6">
                     Nenhum serviço encontrado.
                   </TableCell>
                 </TableRow>
