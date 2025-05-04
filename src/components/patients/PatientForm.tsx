@@ -15,9 +15,17 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue, 
+} from '@/components/ui/select';
 import { toast } from 'sonner';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { mockClinics } from '@/models/clinic';
 
 const formSchema = z.object({
   name: z.string().min(3, { message: 'Nome deve ter pelo menos 3 caracteres' }),
@@ -26,6 +34,7 @@ const formSchema = z.object({
   cpf: z.string().min(11, { message: 'CPF inválido' }),
   birthdate: z.string().min(1, { message: 'Data de nascimento é obrigatória' }),
   address: z.string().min(5, { message: 'Endereço deve ter pelo menos 5 caracteres' }),
+  clinicId: z.string().min(1, { message: 'Selecione uma clínica' }),
   notes: z.string().optional(),
 });
 
@@ -47,6 +56,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ initialData }) => {
       cpf: '',
       birthdate: '',
       address: '',
+      clinicId: '',
       notes: '',
     }
   });
@@ -164,6 +174,33 @@ const PatientForm: React.FC<PatientFormProps> = ({ initialData }) => {
                     <FormControl>
                       <Input placeholder="Endereço completo" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="clinicId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Clínica</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione uma clínica" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {mockClinics.map((clinic) => (
+                          <SelectItem key={clinic.id} value={clinic.id}>
+                            {clinic.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

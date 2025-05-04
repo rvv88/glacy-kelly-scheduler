@@ -16,51 +16,15 @@ import { ChevronLeft, ChevronRight, Clock, Calendar as CalendarIcon } from 'luci
 import { format, addDays, parseISO, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-
-// Mockup de dados para os compromissos
-const mockAppointments = [
-  { 
-    id: '1', 
-    patientName: 'João Silva', 
-    date: '2025-04-07', 
-    time: '09:00', 
-    duration: 60, 
-    service: 'Limpeza',
-    status: 'confirmed'
-  },
-  { 
-    id: '2', 
-    patientName: 'Maria Oliveira', 
-    date: '2025-04-07', 
-    time: '11:00', 
-    duration: 90, 
-    service: 'Canal',
-    status: 'confirmed'
-  },
-  { 
-    id: '3', 
-    patientName: 'Pedro Santos', 
-    date: '2025-04-08', 
-    time: '10:00', 
-    duration: 30, 
-    service: 'Avaliação',
-    status: 'pending'
-  },
-  { 
-    id: '4', 
-    patientName: 'Ana Costa', 
-    date: '2025-04-09', 
-    time: '14:30', 
-    duration: 120, 
-    service: 'Implante',
-    status: 'confirmed'
-  },
-];
+import AppointmentForm from './AppointmentForm';
+import { mockAppointments } from '@/models/appointment';
 
 const AppointmentCalendar: React.FC = () => {
   const today = new Date();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(today);
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('day');
+  const [isAppointmentFormOpen, setIsAppointmentFormOpen] = useState(false);
+  const [selectedTime, setSelectedTime] = useState<string | undefined>();
 
   // Filtra os compromissos para o dia selecionado
   const dayAppointments = mockAppointments.filter(app => 
@@ -73,6 +37,12 @@ const AppointmentCalendar: React.FC = () => {
     const minute = (i % 2) * 30;
     return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
   });
+
+  // Função para abrir o formulário de nova consulta
+  const handleNewAppointment = (time?: string) => {
+    setSelectedTime(time);
+    setIsAppointmentFormOpen(true);
+  };
 
   // Função para renderizar os compromissos do dia
   const renderDayView = () => {
@@ -116,12 +86,18 @@ const AppointmentCalendar: React.FC = () => {
                   <CardContent className="py-2 px-4">
                     <div className="font-medium">{appointment.patientName}</div>
                     <div className="text-sm text-muted-foreground">
-                      {appointment.service} - {appointment.duration} min
+                      {appointment.serviceName} - {appointment.duration} min
                     </div>
                   </CardContent>
                 ) : (
                   <CardContent className="py-4 px-4 flex justify-center items-center">
-                    <Button variant="ghost" className="text-sm">+ Agendar horário</Button>
+                    <Button 
+                      variant="ghost" 
+                      className="text-sm" 
+                      onClick={() => handleNewAppointment(time)}
+                    >
+                      + Agendar horário
+                    </Button>
                   </CardContent>
                 )}
               </Card>
@@ -175,7 +151,7 @@ const AppointmentCalendar: React.FC = () => {
                   <SelectItem value="month">Mensal</SelectItem>
                 </SelectContent>
               </Select>
-              <Button>+ Nova Consulta</Button>
+              <Button onClick={() => handleNewAppointment()}>+ Nova Consulta</Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -204,7 +180,7 @@ const AppointmentCalendar: React.FC = () => {
                         <CardContent className="py-2 px-4">
                           <div className="font-medium">{app.patientName}</div>
                           <div className="text-sm text-muted-foreground">
-                            {app.service} - {app.duration} min
+                            {app.serviceName} - {app.duration} min
                           </div>
                         </CardContent>
                       </Card>
@@ -220,6 +196,13 @@ const AppointmentCalendar: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+      
+      <AppointmentForm 
+        open={isAppointmentFormOpen}
+        onClose={() => setIsAppointmentFormOpen(false)}
+        initialDate={selectedDate}
+        initialTime={selectedTime}
+      />
     </div>
   );
 };

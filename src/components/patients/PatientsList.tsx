@@ -8,7 +8,6 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { 
@@ -21,7 +20,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Search, MoreVertical, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Search, MoreVertical } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 // Mockup de dados para os pacientes
 const mockPatients = [
@@ -32,7 +33,8 @@ const mockPatients = [
     phone: '(11) 98765-4321',
     cpf: '123.456.789-00',
     lastVisit: '2025-03-20',
-    status: 'active'
+    status: 'active',
+    clinicId: '1'
   },
   { 
     id: '2', 
@@ -41,7 +43,8 @@ const mockPatients = [
     phone: '(11) 91234-5678',
     cpf: '987.654.321-00',
     lastVisit: '2025-03-15',
-    status: 'active'
+    status: 'active',
+    clinicId: '2'
   },
   { 
     id: '3', 
@@ -50,7 +53,8 @@ const mockPatients = [
     phone: '(11) 92345-6789',
     cpf: '456.789.123-00',
     lastVisit: '2025-02-10',
-    status: 'inactive'
+    status: 'inactive',
+    clinicId: '1'
   },
   { 
     id: '4', 
@@ -59,7 +63,8 @@ const mockPatients = [
     phone: '(11) 93456-7890',
     cpf: '789.123.456-00',
     lastVisit: '2025-04-02',
-    status: 'active'
+    status: 'active',
+    clinicId: '2'
   },
   { 
     id: '5', 
@@ -68,7 +73,8 @@ const mockPatients = [
     phone: '(11) 94567-8901',
     cpf: '321.654.987-00',
     lastVisit: '2025-01-25',
-    status: 'inactive'
+    status: 'inactive',
+    clinicId: '1'
   },
 ];
 
@@ -85,15 +91,11 @@ const PatientsList: React.FC = () => {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader>
         <div>
           <CardTitle>Pacientes</CardTitle>
           <CardDescription>Gerenciamento de cadastros</CardDescription>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Paciente
-        </Button>
       </CardHeader>
       <CardContent>
         <div className="mb-4 flex items-center gap-2">
@@ -157,8 +159,12 @@ const PatientsList: React.FC = () => {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Ações</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem>Ver detalhes</DropdownMenuItem>
-                          <DropdownMenuItem>Editar cadastro</DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link to={`/patients/${patient.id}`}>Ver detalhes</Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link to={`/patients/edit/${patient.id}`}>Editar cadastro</Link>
+                          </DropdownMenuItem>
                           <DropdownMenuItem>Histórico de consultas</DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-destructive">

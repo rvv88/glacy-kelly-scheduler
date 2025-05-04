@@ -27,6 +27,42 @@ const treatments = [
     title: 'Botox',
     description: 'Aplicação de toxina botulínica para fins estéticos e terapêuticos.',
   },
+  {
+    title: 'Preenchimento',
+    description: 'Aplicação de substâncias para restauração de volume e contornos faciais.',
+  },
+  {
+    title: 'Manutenção Invisalign',
+    description: 'Acompanhamento e ajustes do tratamento com alinhadores transparentes.',
+  },
+  {
+    title: 'Bioestimulador de colágeno',
+    description: 'Tratamento com Sculptra e Radiesse para estimular a produção natural de colágeno.',
+  },
+  {
+    title: 'Ultrassom microfocado',
+    description: 'Tecnologia para lifting facial não invasivo e rejuvenescimento da pele.',
+  },
+  {
+    title: 'Skinbooster',
+    description: 'Hidratação profunda da pele com ácido hialurônico para melhorar a elasticidade e luminosidade.',
+  },
+  {
+    title: 'Bioregeneração dérmica',
+    description: 'Tratamento para regeneração dos tecidos da pele e melhoria da qualidade cutânea.',
+  },
+  {
+    title: 'Radiofrequência',
+    description: 'Procedimento para firmeza da pele através do aquecimento controlado das camadas profundas.',
+  },
+  {
+    title: 'Jato de plasma',
+    description: 'Tecnologia avançada para rejuvenescimento e tratamento de imperfeições da pele.',
+  },
+  {
+    title: 'Lipoenzimática de papada',
+    description: 'Procedimento minimamente invasivo para redução da gordura na região do queixo e pescoço.',
+  },
 ];
 
 const TreatmentsSection: React.FC = () => {
@@ -47,7 +83,7 @@ const TreatmentsSection: React.FC = () => {
           </div>
         </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mt-8">
-          {treatments.map((treatment, index) => (
+          {treatments.slice(0, 8).map((treatment, index) => (
             <Card key={index} className="transition-all hover:shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
