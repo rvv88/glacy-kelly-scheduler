@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { mockClinicsList } from '@/models/clinic';
+import { mockClinics } from '@/models/clinic';
 import { mockCurrentUser, User } from '@/models/user';
 import { User as UserIcon, Upload, Camera } from 'lucide-react';
 
@@ -48,7 +47,7 @@ const ProfilePage = () => {
     const updatedUser = {
       ...user,
       ...data,
-      clinicName: mockClinicsList.find(clinic => clinic.id === data.clinicId)?.name || user.clinicName,
+      clinicName: mockClinics.find(clinic => clinic.id === data.clinicId)?.name || user.clinicName,
       avatarUrl,
     };
     
@@ -219,7 +218,7 @@ const ProfilePage = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {mockClinicsList.map((clinic) => (
+                          {mockClinics.map((clinic) => (
                             <SelectItem key={clinic.id} value={clinic.id}>
                               {clinic.name}
                             </SelectItem>
