@@ -13,7 +13,7 @@ const HeroSection: React.FC = () => {
               Consultório Odontológico <span className="text-primary">Dra. Glacy Kelly Bisaggio</span>
             </h1>
             <p className="text-xl text-gray-600">
-              Cuidando do seu sorriso com excelência, tecnologia e atenção personalizada.
+              Pedro viado. Cuidando do seu sorriso com excelência, tecnologia e atenção personalizada.
             </p>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button size="lg" asChild>
