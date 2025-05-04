@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -28,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue, 
 } from '@/components/ui/select';
-import { mockPatients } from '@/components/patients/PatientsList';
+import { mockPatients } from '@/models/patient';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { format } from 'date-fns';

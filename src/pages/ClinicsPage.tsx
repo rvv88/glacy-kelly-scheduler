@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -84,10 +83,12 @@ const ClinicsPage: React.FC = () => {
       );
       toast.success('Clínica atualizada com sucesso!');
     } else {
-      // Add new clinic
+      // Add new clinic - ensure all required properties are provided
       const newClinic: Clinic = {
         id: `${Date.now()}`,
-        ...data,
+        name: data.name,
+        address: data.address,
+        phone: data.phone,
       };
       setClinics(prevClinics => [...prevClinics, newClinic]);
       toast.success('Clínica cadastrada com sucesso!');
