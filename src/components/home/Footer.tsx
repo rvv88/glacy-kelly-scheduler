@@ -8,7 +8,7 @@ const Footer: React.FC = () => {
         <div className="flex flex-col items-center justify-center space-y-4 text-center">
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">
-              &copy; {new Date().getFullYear()} Consultório Odontológico Dra. Glacy Kelly Bisaggio. Todos os direitos reservados.
+              &copy; {new Date().getFullYear()} Pedro viado. Consultório Odontológico Dra. Glacy Kelly Bisaggio. Todos os direitos reservados.
             </p>
           </div>
         </div>
