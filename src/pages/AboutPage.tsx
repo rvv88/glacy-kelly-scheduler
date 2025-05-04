@@ -20,7 +20,7 @@ const AboutPage: React.FC = () => {
                 <h3 className="text-2xl font-bold text-dental-700">Excelência em Odontologia</h3>
                 <div className="space-y-4 text-balance">
                   <p>
-                    ACom uma trajetória sólida e dedicada à saúde e ao bem-estar de seus pacientes, 
+                    Com uma trajetória sólida e dedicada à saúde e ao bem-estar de seus pacientes, 
                     a Dra. Glacy Kelly Bisaggio atua há mais de 35 anos nas áreas de harmonização 
                     orofacial e ortodontia. Reconhecida por sua excelência técnica, sensibilidade 
                     estética e atendimento humanizado, ela une experiência e constante atualização 
