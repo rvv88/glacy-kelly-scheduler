@@ -28,7 +28,7 @@ const HeroSection: React.FC = () => {
             <img
               alt="Dra. Glacy Kelly Bisaggio"
               className="aspect-video overflow-hidden rounded-xl object-cover object-center"
-              src="http://drive.google.com/uc?export=view&id=1NhS39G-de_bNXAmSe-baaY5fSjqOtVR9"
+              src="https://drive.usercontent.google.com/download?id=1NhS39G-de_bNXAmSe-baaY5fSjqOtVR9&export=view&authuser=1"
               width={550}
               height={310}
             />
