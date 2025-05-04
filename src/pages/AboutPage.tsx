@@ -50,7 +50,7 @@ const AboutPage: React.FC = () => {
             </div>
             <div className="md:h-auto">
               <img 
-                src="https://drive.google.com/thumbnail?id=1GEsRrCsVdC5oS1erjyOGsbrHhKX98CrG&sz=w1000" 
+                src="https://drive.google.com/thumbnail?id=1GEsRrCsVdC5oS1erjyOGsbrHhKX98CrG&sz=w600" 
                 alt="Dra. Kelly Bisaggio" 
                 className="w-full h-full object-cover" 
               />
