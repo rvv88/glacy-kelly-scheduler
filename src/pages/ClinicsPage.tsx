@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Edit, Trash2 } from 'lucide-react';
-import { mockClinics, Clinic } from '@/models/clinic';
+import { mockClinics, Clinic, getFullAddress } from '@/models/clinic';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -27,7 +28,13 @@ import { z } from 'zod';
 
 const formSchema = z.object({
   name: z.string().min(3, { message: 'Nome deve ter pelo menos 3 caracteres' }),
-  address: z.string().min(5, { message: 'Endereço deve ter pelo menos 5 caracteres' }),
+  street: z.string().min(3, { message: 'Logradouro deve ter pelo menos 3 caracteres' }),
+  number: z.string().min(1, { message: 'Número é obrigatório' }),
+  complement: z.string().optional(),
+  neighborhood: z.string().min(2, { message: 'Bairro deve ter pelo menos 2 caracteres' }),
+  city: z.string().min(2, { message: 'Cidade deve ter pelo menos 2 caracteres' }),
+  state: z.string().min(2, { message: 'Estado deve ter pelo menos 2 caracteres' }),
+  zipCode: z.string().min(8, { message: 'CEP inválido' }),
   phone: z.string().min(10, { message: 'Telefone inválido' }),
 });
 
@@ -42,7 +49,13 @@ const ClinicsPage: React.FC = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      address: '',
+      street: '',
+      number: '',
+      complement: '',
+      neighborhood: '',
+      city: '',
+      state: '',
+      zipCode: '',
       phone: '',
     }
   });
@@ -52,14 +65,26 @@ const ClinicsPage: React.FC = () => {
       setEditingClinic(clinic);
       form.reset({
         name: clinic.name,
-        address: clinic.address,
+        street: clinic.street,
+        number: clinic.number,
+        complement: clinic.complement || '',
+        neighborhood: clinic.neighborhood,
+        city: clinic.city,
+        state: clinic.state,
+        zipCode: clinic.zipCode,
         phone: clinic.phone,
       });
     } else {
       setEditingClinic(null);
       form.reset({
         name: '',
-        address: '',
+        street: '',
+        number: '',
+        complement: '',
+        neighborhood: '',
+        city: '',
+        state: '',
+        zipCode: '',
         phone: '',
       });
     }
@@ -83,12 +108,18 @@ const ClinicsPage: React.FC = () => {
       );
       toast.success('Clínica atualizada com sucesso!');
     } else {
-      // Add new clinic - ensure all required properties are provided
+      // Add new clinic
       const newClinic: Clinic = {
         id: `${Date.now()}`,
         name: data.name,
-        address: data.address,
-        phone: data.phone,
+        street: data.street,
+        number: data.number,
+        complement: data.complement,
+        neighborhood: data.neighborhood,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zipCode,
+        phone: data.phone
       };
       setClinics(prevClinics => [...prevClinics, newClinic]);
       toast.success('Clínica cadastrada com sucesso!');
@@ -120,7 +151,10 @@ const ClinicsPage: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="text-sm">
-                <strong>Endereço:</strong> {clinic.address}
+                <strong>Endereço:</strong> {getFullAddress(clinic)}
+              </div>
+              <div className="text-sm">
+                <strong>CEP:</strong> {clinic.zipCode}
               </div>
               <div className="text-sm">
                 <strong>Telefone:</strong> {clinic.phone}
@@ -141,7 +175,7 @@ const ClinicsPage: React.FC = () => {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>
               {editingClinic ? 'Editar Clínica' : 'Nova Clínica'}
@@ -159,7 +193,7 @@ const ClinicsPage: React.FC = () => {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nome</FormLabel>
+                    <FormLabel>Nome da Unidade</FormLabel>
                     <FormControl>
                       <Input placeholder="Nome da clínica" {...field} />
                     </FormControl>
@@ -167,32 +201,127 @@ const ClinicsPage: React.FC = () => {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Endereço</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Endereço completo" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Telefone</FormLabel>
-                    <FormControl>
-                      <Input placeholder="(00) 00000-0000" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="street"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Logradouro</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Rua, Avenida, etc." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número</FormLabel>
+                      <FormControl>
+                        <Input placeholder="123" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="complement"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Complemento</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Sala, Andar, etc. (opcional)" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="neighborhood"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bairro</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Bairro" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cidade</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Cidade" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="state"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Estado</FormLabel>
+                      <FormControl>
+                        <Input placeholder="UF" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="zipCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>CEP</FormLabel>
+                      <FormControl>
+                        <Input placeholder="00000-000" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telefone</FormLabel>
+                      <FormControl>
+                        <Input placeholder="(00) 00000-0000" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={closeDialog}>
                   Cancelar

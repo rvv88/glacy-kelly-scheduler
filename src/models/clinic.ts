@@ -2,22 +2,44 @@
 export interface Clinic {
   id: string;
   name: string;
-  address: string;
+  street: string;
+  number: string;
+  complement?: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+  zipCode: string;
   phone: string;
 }
 
+// Helper function to get the full address as a string
+export const getFullAddress = (clinic: Clinic): string => {
+  return `${clinic.street}, ${clinic.number}${clinic.complement ? `, ${clinic.complement}` : ''}, ${clinic.neighborhood}, ${clinic.city}-${clinic.state}`;
+};
+
 // Mock data for clinics
-export const mockClinics = [
+export const mockClinics: Clinic[] = [
   {
     id: '1',
     name: 'Clínica da Barra',
-    address: 'Av. Jornalista Ricardo Marinho, 360, sala 218, Barra da Tijuca, Rio de Janeiro-RJ',
+    street: 'Av. Jornalista Ricardo Marinho',
+    number: '360',
+    complement: 'sala 218',
+    neighborhood: 'Barra da Tijuca',
+    city: 'Rio de Janeiro',
+    state: 'RJ',
+    zipCode: '22631-350',
     phone: '(21) 99987-9186'
   },
   {
     id: '2',
     name: 'Clínica Centro',
-    address: 'Rua da Assembleia, 10, Centro, Rio de Janeiro-RJ',
+    street: 'Rua da Assembleia',
+    number: '10',
+    neighborhood: 'Centro',
+    city: 'Rio de Janeiro',
+    state: 'RJ',
+    zipCode: '20011-000',
     phone: '(21) 99987-9186'
   }
 ];

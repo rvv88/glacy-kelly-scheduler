@@ -9,9 +9,9 @@ import {
   Settings,
   Users,
   FileText,
-  Bell,
   FileClock,
-  LayoutDashboard
+  LayoutDashboard,
+  Building
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -22,12 +22,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const location = useLocation();
   
   const links = [
+    { name: 'Home', href: '/', icon: Home },
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Agenda', href: '/calendar', icon: Calendar },
     { name: 'Pacientes', href: '/patients', icon: Users },
     { name: 'Serviços', href: '/services', icon: FileText },
-    { name: 'Notificações', href: '/notifications', icon: Bell },
+    { name: 'Clínicas', href: '/clinics', icon: Building },
     { name: 'Histórico', href: '/history', icon: FileClock },
+    { name: 'Sobre', href: '/about', icon: Home },
     { name: 'Configurações', href: '/settings', icon: Settings },
   ];
 

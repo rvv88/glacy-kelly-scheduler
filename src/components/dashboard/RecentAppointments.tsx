@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon } from 'lucide-react';
+import { Building, CalendarIcon } from 'lucide-react';
 
 // Mockup de dados para as consultas recentes
 const mockRecentAppointments = [
@@ -16,6 +16,8 @@ const mockRecentAppointments = [
     date: '2025-04-08',
     time: '09:00',
     status: 'scheduled',
+    clinicId: '1',
+    clinicName: 'Clínica da Barra'
   },
   {
     id: '2',
@@ -24,6 +26,8 @@ const mockRecentAppointments = [
     date: '2025-04-08',
     time: '11:00',
     status: 'confirmed',
+    clinicId: '2',
+    clinicName: 'Clínica Centro'
   },
   {
     id: '3',
@@ -32,6 +36,8 @@ const mockRecentAppointments = [
     date: '2025-04-09',
     time: '10:00',
     status: 'scheduled',
+    clinicId: '1',
+    clinicName: 'Clínica da Barra'
   },
   {
     id: '4',
@@ -40,6 +46,8 @@ const mockRecentAppointments = [
     date: '2025-04-09',
     time: '14:30',
     status: 'confirmed',
+    clinicId: '2',
+    clinicName: 'Clínica Centro'
   },
   {
     id: '5',
@@ -48,6 +56,8 @@ const mockRecentAppointments = [
     date: '2025-04-10',
     time: '16:00',
     status: 'scheduled',
+    clinicId: '1',
+    clinicName: 'Clínica da Barra'
   },
 ];
 
@@ -85,6 +95,10 @@ const RecentAppointments: React.FC = () => {
               <div className="ml-4 space-y-1">
                 <p className="text-sm font-medium leading-none">{appointment.patientName}</p>
                 <p className="text-sm text-muted-foreground">{appointment.service}</p>
+                <div className="flex items-center text-xs text-muted-foreground">
+                  <Building className="h-3 w-3 mr-1" />
+                  {appointment.clinicName}
+                </div>
               </div>
               <div className="ml-auto flex flex-col items-end gap-2">
                 <div className="flex items-center gap-1">

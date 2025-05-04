@@ -1,11 +1,57 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import StatCard from '@/components/dashboard/StatCard';
 import AppointmentChart from '@/components/dashboard/AppointmentChart';
 import RecentAppointments from '@/components/dashboard/RecentAppointments';
 import { Calendar as CalendarIcon, Users, ClipboardCheck, DollarSign } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { toast } from 'sonner';
+
+// Mock data for completed appointments
+const mockCompletedAppointments = [
+  {
+    id: '1',
+    patientName: 'Carlos Rodrigues',
+    service: 'Harmonização Facial',
+    date: '2025-04-01',
+    time: '14:00',
+    status: 'completed',
+  },
+  {
+    id: '2',
+    patientName: 'Marina Silva',
+    service: 'Limpeza',
+    date: '2025-04-03',
+    time: '09:30',
+    status: 'completed',
+  },
+  {
+    id: '3',
+    patientName: 'André Santos',
+    service: 'Clareamento',
+    date: '2025-04-05',
+    time: '11:00',
+    status: 'completed',
+  },
+];
 
 const Dashboard: React.FC = () => {
+  const [selectedMonth, setSelectedMonth] = useState<string>('Abr');
+  const [completedAppointments, setCompletedAppointments] = useState(mockCompletedAppointments);
+  
+  // Function to filter appointments by month
+  const filterAppointmentsByMonth = (month: string) => {
+    setSelectedMonth(month);
+    // In a real app, this would fetch data from an API based on the selected month
+    // For now, we'll just simulate the filter
+    console.log(`Filtering appointments for month: ${month}`);
+    // Update UI to show we're filtering by the selected month
+    toast.info(`Exibindo consultas de ${month}`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -44,10 +90,47 @@ const Dashboard: React.FC = () => {
       </div>
       
       <div className="grid gap-4 grid-cols-1 md:grid-cols-4 lg:grid-cols-4">
-        <AppointmentChart />
+        <AppointmentChart onMonthClick={filterAppointmentsByMonth} />
       </div>
       
-      <div className="grid gap-4 grid-cols-1">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+        {/* Consultas realizadas */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Consultas Realizadas</CardTitle>
+            <CardDescription>Atendimentos concluídos em {selectedMonth}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-8">
+              {completedAppointments.map((appointment) => (
+                <div key={appointment.id} className="flex items-center">
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      {appointment.patientName.split(' ').map(n => n[0]).join('').toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="ml-4 space-y-1">
+                    <p className="text-sm font-medium leading-none">{appointment.patientName}</p>
+                    <p className="text-sm text-muted-foreground">{appointment.service}</p>
+                  </div>
+                  <div className="ml-auto flex flex-col items-end gap-2">
+                    <div className="flex items-center gap-1">
+                      <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">
+                        {format(parseISO(appointment.date), "EEE, dd MMM", { locale: ptBR })} às {appointment.time}
+                      </span>
+                    </div>
+                    <Badge variant="outline" className="bg-green-50 text-green-600 border-green-300">
+                      Realizado
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Próximas consultas */}
         <RecentAppointments />
       </div>
     </div>

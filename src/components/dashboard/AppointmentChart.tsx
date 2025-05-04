@@ -2,6 +2,11 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { toast } from 'sonner';
+
+interface AppointmentChartProps {
+  onMonthClick?: (month: string) => void;
+}
 
 const mockChartData = [
   { name: 'Jan', total: 38 },
@@ -18,7 +23,14 @@ const mockChartData = [
   { name: 'Dez', total: 39 },
 ];
 
-const AppointmentChart: React.FC = () => {
+const AppointmentChart: React.FC<AppointmentChartProps> = ({ onMonthClick }) => {
+  const handleBarClick = (data: any) => {
+    if (onMonthClick) {
+      onMonthClick(data.name);
+      toast.info(`Mostrando consultas de ${data.name}`);
+    }
+  };
+
   return (
     <Card className="col-span-4">
       <CardHeader>
@@ -48,7 +60,8 @@ const AppointmentChart: React.FC = () => {
                 dataKey="total"
                 fill="hsl(var(--primary))"
                 radius={[4, 4, 0, 0]}
-                className="fill-primary"
+                className="fill-primary cursor-pointer"
+                onClick={handleBarClick}
               />
             </BarChart>
           </ResponsiveContainer>

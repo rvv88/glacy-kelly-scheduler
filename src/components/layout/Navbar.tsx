@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Calendar, Home, Menu, Settings, User, X } from 'lucide-react';
+import { Bell, Menu, User, X } from 'lucide-react';
 
 interface NavbarProps {
   isSidebarOpen: boolean;
@@ -39,40 +39,13 @@ const Navbar: React.FC<NavbarProps> = ({ isSidebarOpen, toggleSidebar }) => {
           </Link>
         </div>
 
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-          <Link
-            to="/"
-            className="transition-colors hover:text-primary"
-          >
-            Home
-          </Link>
-          <Link
-            to="/calendar"
-            className="transition-colors hover:text-primary"
-          >
-            Agenda
-          </Link>
-          <Link
-            to="/patients"
-            className="transition-colors hover:text-primary"
-          >
-            Pacientes
-          </Link>
-          <Link
-            to="/services"
-            className="transition-colors hover:text-primary"
-          >
-            Serviços
-          </Link>
-          <Link
-            to="/about"
-            className="transition-colors hover:text-primary"
-          >
-            Sobre
-          </Link>
-        </nav>
-
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+          >
+            <Bell className="h-5 w-5" />
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
