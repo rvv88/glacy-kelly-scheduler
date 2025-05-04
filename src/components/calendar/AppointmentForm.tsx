@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -31,6 +32,7 @@ import { mockPatients } from '@/models/patient';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { mockClinics } from '@/models/clinic';
 
 const treatments = [
   { id: '1', name: 'Limpeza', duration: 60 },
@@ -51,6 +53,7 @@ const treatments = [
 const formSchema = z.object({
   patientId: z.string().min(1, { message: 'Selecione um paciente' }),
   serviceId: z.string().min(1, { message: 'Selecione um serviço' }),
+  clinicId: z.string().min(1, { message: 'Selecione uma clínica' }),
   date: z.string().min(1, { message: 'Selecione uma data' }),
   time: z.string().min(1, { message: 'Selecione um horário' }),
   duration: z.number().min(15, { message: 'Duração mínima de 15 minutos' }),
@@ -77,6 +80,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
     defaultValues: {
       patientId: '',
       serviceId: '',
+      clinicId: '',
       date: initialDate ? format(initialDate, 'yyyy-MM-dd') : '',
       time: initialTime || '',
       duration: 30,
@@ -166,6 +170,33 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                       {treatments.map((service) => (
                         <SelectItem key={service.id} value={service.id}>
                           {service.name} ({service.duration} min)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="clinicId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Clínica</FormLabel>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma clínica" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {mockClinics.map((clinic) => (
+                        <SelectItem key={clinic.id} value={clinic.id}>
+                          {clinic.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

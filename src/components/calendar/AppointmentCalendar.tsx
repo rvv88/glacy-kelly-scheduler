@@ -12,7 +12,7 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, Clock, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Calendar as CalendarIcon, Building } from 'lucide-react';
 import { format, addDays, parseISO, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -87,6 +87,10 @@ const AppointmentCalendar: React.FC = () => {
                     <div className="font-medium">{appointment.patientName}</div>
                     <div className="text-sm text-muted-foreground">
                       {appointment.serviceName} - {appointment.duration} min
+                    </div>
+                    <div className="text-xs flex items-center gap-1 text-muted-foreground mt-1">
+                      <Building className="h-3 w-3" />
+                      <span>{appointment.clinicName}</span>
                     </div>
                   </CardContent>
                 ) : (
@@ -181,6 +185,10 @@ const AppointmentCalendar: React.FC = () => {
                           <div className="font-medium">{app.patientName}</div>
                           <div className="text-sm text-muted-foreground">
                             {app.serviceName} - {app.duration} min
+                          </div>
+                          <div className="text-xs flex items-center gap-1 text-muted-foreground mt-1">
+                            <Building className="h-3 w-3" />
+                            <span>{app.clinicName}</span>
                           </div>
                         </CardContent>
                       </Card>
