@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Bell, User } from 'lucide-react';
+import { Bell, Menu, User } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { mockCurrentUser } from '@/models/user';
 
@@ -19,7 +19,7 @@ interface NavbarProps {
   toggleSidebar: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = () => {
+const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
   // Get user from mock data (would come from auth context in a real app)
   const user = mockCurrentUser;
   
@@ -27,6 +27,15 @@ const Navbar: React.FC<NavbarProps> = () => {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={toggleSidebar}
+          >
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle menu</span>
+          </Button>
           <Link
             to="/"
             className="flex items-center gap-2 font-semibold text-xl text-primary"
