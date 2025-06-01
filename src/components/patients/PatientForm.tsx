@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,6 +26,8 @@ import { toast } from 'sonner';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { mockClinics } from '@/models/clinic';
+import { useAuth } from '@/contexts/AuthContext';
+import { usePatientProfile } from '@/hooks/usePatientProfile';
 
 const formSchema = z.object({
   name: z.string().min(3, { message: 'Nome deve ter pelo menos 3 caracteres' }),
@@ -46,12 +48,14 @@ interface PatientFormProps {
 
 const PatientForm: React.FC<PatientFormProps> = ({ initialData }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { patientProfile, hasProfile, savePatientProfile } = usePatientProfile();
   
   const form = useForm<PatientFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
       name: '',
-      email: '',
+      email: user?.email || '',
       phone: '',
       cpf: '',
       birthdate: '',
@@ -61,37 +65,62 @@ const PatientForm: React.FC<PatientFormProps> = ({ initialData }) => {
     }
   });
 
+  // Preenche o formulário com dados existentes do perfil
+  useEffect(() => {
+    if (patientProfile && !initialData) {
+      form.reset({
+        name: patientProfile.name,
+        email: patientProfile.email,
+        phone: patientProfile.phone,
+        cpf: patientProfile.cpf,
+        birthdate: patientProfile.birthdate,
+        address: patientProfile.address,
+        clinicId: patientProfile.clinicId,
+        notes: patientProfile.notes || '',
+      });
+    }
+  }, [patientProfile, form, initialData]);
+
   const onSubmit = async (data: PatientFormValues) => {
+    if (!user) {
+      toast.error('Você precisa estar logado para salvar os dados');
+      return;
+    }
+
     try {
-      // Simulando envio dos dados para uma API
-      console.log('Form data:', data);
-      toast.success('Paciente salvo com sucesso!');
+      await savePatientProfile(data);
+      toast.success('Dados salvos com sucesso!');
       navigate('/patients');
     } catch (error) {
-      toast.error('Erro ao salvar paciente');
+      toast.error('Erro ao salvar dados');
       console.error('Error submitting form:', error);
     }
   };
+
+  const isFirstTime = !hasProfile;
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/patients')}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+          {!isFirstTime && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/patients')}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          )}
           <div>
             <CardTitle>
-              {initialData ? 'Editar Paciente' : 'Novo Paciente'}
+              {isFirstTime ? 'Complete seu Perfil' : hasProfile ? 'Editar Meus Dados' : 'Meus Dados'}
             </CardTitle>
             <CardDescription>
-              {initialData
-                ? 'Atualização dos dados cadastrais'
-                : 'Cadastro de novo paciente'}
+              {isFirstTime 
+                ? 'Complete suas informações para continuar'
+                : 'Visualize e edite suas informações pessoais'
+              }
             </CardDescription>
           </div>
         </div>
@@ -107,7 +136,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ initialData }) => {
                   <FormItem>
                     <FormLabel>Nome completo</FormLabel>
                     <FormControl>
-                      <Input placeholder="Nome do paciente" {...field} />
+                      <Input placeholder="Seu nome completo" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -133,7 +162,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ initialData }) => {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="email@exemplo.com" {...field} />
+                      <Input placeholder="seu@email.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -215,7 +244,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ initialData }) => {
                   <FormLabel>Observações</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Informações adicionais sobre o paciente" 
+                      placeholder="Informações adicionais" 
                       className="h-24"
                       {...field} 
                     />
@@ -226,16 +255,18 @@ const PatientForm: React.FC<PatientFormProps> = ({ initialData }) => {
             />
 
             <div className="flex justify-end space-x-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate('/patients')}
-              >
-                Cancelar
-              </Button>
+              {!isFirstTime && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate('/patients')}
+                >
+                  Cancelar
+                </Button>
+              )}
               <Button type="submit">
                 <Save className="mr-2 h-4 w-4" />
-                Salvar
+                {isFirstTime ? 'Completar Cadastro' : 'Salvar Alterações'}
               </Button>
             </div>
           </form>
