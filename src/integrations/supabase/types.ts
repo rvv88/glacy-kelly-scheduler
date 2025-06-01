@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      clínica: {
+        Row: {
+          Bairro: string
+          CEP: string
+          Cidade: string
+          Complemento: string | null
+          Estado: string
+          id: string
+          Logradouro: string
+          "Nome da Unidade": string
+          Número: string
+          Telefone: string | null
+        }
+        Insert: {
+          Bairro: string
+          CEP: string
+          Cidade: string
+          Complemento?: string | null
+          Estado: string
+          id?: string
+          Logradouro: string
+          "Nome da Unidade": string
+          Número: string
+          Telefone?: string | null
+        }
+        Update: {
+          Bairro?: string
+          CEP?: string
+          Cidade?: string
+          Complemento?: string | null
+          Estado?: string
+          id?: string
+          Logradouro?: string
+          "Nome da Unidade"?: string
+          Número?: string
+          Telefone?: string | null
+        }
+        Relationships: []
+      }
       patient_profiles: {
         Row: {
           address: string

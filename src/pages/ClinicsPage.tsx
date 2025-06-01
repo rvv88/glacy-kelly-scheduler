@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Edit, Trash2 } from 'lucide-react';
-import { mockClinics, Clinic, getFullAddress } from '@/models/clinic';
+import { Plus, Edit, Trash2, Loader2 } from 'lucide-react';
+import { Clinic, getFullAddress } from '@/models/clinic';
 import { toast } from 'sonner';
+import { useClinics } from '@/hooks/useClinics';
 import {
   Dialog,
   DialogContent,
@@ -41,7 +42,7 @@ const formSchema = z.object({
 type ClinicFormValues = z.infer<typeof formSchema>;
 
 const ClinicsPage: React.FC = () => {
-  const [clinics, setClinics] = useState<Clinic[]>(mockClinics);
+  const { clinics, loading, saveClinic, updateClinic, deleteClinic } = useClinics();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingClinic, setEditingClinic] = useState<Clinic | null>(null);
 
@@ -96,41 +97,40 @@ const ClinicsPage: React.FC = () => {
     setEditingClinic(null);
   };
 
-  const onSubmit = (data: ClinicFormValues) => {
-    if (editingClinic) {
-      // Update existing clinic
-      setClinics(prevClinics => 
-        prevClinics.map(c => 
-          c.id === editingClinic.id 
-            ? { ...c, ...data } 
-            : c
-        )
-      );
-      toast.success('Clínica atualizada com sucesso!');
-    } else {
-      // Add new clinic
-      const newClinic: Clinic = {
-        id: `${Date.now()}`,
-        name: data.name,
-        street: data.street,
-        number: data.number,
-        complement: data.complement,
-        neighborhood: data.neighborhood,
-        city: data.city,
-        state: data.state,
-        zipCode: data.zipCode,
-        phone: data.phone
-      };
-      setClinics(prevClinics => [...prevClinics, newClinic]);
-      toast.success('Clínica cadastrada com sucesso!');
+  const onSubmit = async (data: ClinicFormValues) => {
+    try {
+      if (editingClinic) {
+        // Update existing clinic
+        await updateClinic(editingClinic.id, data);
+        toast.success('Clínica atualizada com sucesso!');
+      } else {
+        // Add new clinic
+        await saveClinic(data);
+        toast.success('Clínica cadastrada com sucesso!');
+      }
+      closeDialog();
+    } catch (error) {
+      toast.error('Erro ao salvar clínica. Tente novamente.');
     }
-    closeDialog();
   };
 
-  const handleDelete = (clinic: Clinic) => {
-    setClinics(prevClinics => prevClinics.filter(c => c.id !== clinic.id));
-    toast.success('Clínica removida com sucesso!');
+  const handleDelete = async (clinic: Clinic) => {
+    try {
+      await deleteClinic(clinic.id);
+      toast.success('Clínica removida com sucesso!');
+    } catch (error) {
+      toast.error('Erro ao remover clínica. Tente novamente.');
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Carregando clínicas...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
