@@ -11,7 +11,16 @@ export interface User {
   avatarUrl?: string;
 }
 
-// Mock user data for development
+export interface Profile {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Mock user data for development (only used when not authenticated)
 export const mockCurrentUser: User = {
   id: '1',
   name: 'Dra. Glacy Kelly Bisaggio',

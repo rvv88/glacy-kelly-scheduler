@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,34 +17,37 @@ import AboutPage from "./pages/AboutPage";
 import NotFound from "./pages/NotFound";
 
 import { cn } from "@/lib/utils";
+import { AuthProvider } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Index />} />
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="calendar" element={<CalendarPage />} />
-            <Route path="patients" element={<PatientsPage />} />
-            <Route path="patients/new" element={<PatientFormPage />} />
-            <Route path="patients/edit/:id" element={<PatientFormPage />} />
-            <Route path="services" element={<ServicesPage />} />
-            <Route path="services/new" element={<ServiceFormPage />} />
-            <Route path="services/edit/:id" element={<ServiceFormPage />} />
-            <Route path="clinics" element={<ClinicsPage />} />
-            <Route path="profile" element={<ProfilePage />} />
-            <Route path="about" element={<AboutPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Index />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="calendar" element={<CalendarPage />} />
+              <Route path="patients" element={<PatientsPage />} />
+              <Route path="patients/new" element={<PatientFormPage />} />
+              <Route path="patients/edit/:id" element={<PatientFormPage />} />
+              <Route path="services" element={<ServicesPage />} />
+              <Route path="services/new" element={<ServiceFormPage />} />
+              <Route path="services/edit/:id" element={<ServiceFormPage />} />
+              <Route path="clinics" element={<ClinicsPage />} />
+              <Route path="profile" element={<ProfilePage />} />
+              <Route path="about" element={<AboutPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
