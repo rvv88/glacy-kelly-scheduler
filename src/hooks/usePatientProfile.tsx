@@ -47,7 +47,19 @@ export const usePatientProfile = () => {
       }
 
       if (data) {
-        setPatientProfile(data);
+        const profile: PatientProfile = {
+          id: data.id,
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          cpf: data.cpf,
+          birthdate: data.birthdate,
+          address: data.address,
+          clinicId: data.clinic_id,
+          notes: data.notes || undefined,
+          userId: data.user_id,
+        };
+        setPatientProfile(profile);
         setHasProfile(true);
       } else {
         setHasProfile(false);
@@ -81,7 +93,20 @@ export const usePatientProfile = () => {
 
       if (error) throw error;
 
-      setPatientProfile({ ...profileData, id: data.id, userId: user.id });
+      const newProfile: PatientProfile = {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        cpf: data.cpf,
+        birthdate: data.birthdate,
+        address: data.address,
+        clinicId: data.clinic_id,
+        notes: data.notes || undefined,
+        userId: data.user_id,
+      };
+
+      setPatientProfile(newProfile);
       setHasProfile(true);
       
       return data;

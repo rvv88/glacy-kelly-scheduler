@@ -88,7 +88,16 @@ const PatientForm: React.FC<PatientFormProps> = ({ initialData }) => {
     }
 
     try {
-      await savePatientProfile(data);
+      await savePatientProfile({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        cpf: data.cpf,
+        birthdate: data.birthdate,
+        address: data.address,
+        clinicId: data.clinicId,
+        notes: data.notes,
+      });
       toast.success('Dados salvos com sucesso!');
       navigate('/patients');
     } catch (error) {
