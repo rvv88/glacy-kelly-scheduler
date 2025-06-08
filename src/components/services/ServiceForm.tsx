@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -64,11 +63,19 @@ const ServiceForm: React.FC = () => {
 
   const onSubmit = async (data: ServiceFormValues) => {
     try {
+      // Ensure all required fields are present with proper types
+      const serviceData = {
+        name: data.name,
+        duration: data.duration,
+        description: data.description,
+        active: data.active,
+      };
+
       if (isEditing && id) {
-        await updateService(id, data);
+        await updateService(id, serviceData);
         toast.success('Serviço atualizado com sucesso!');
       } else {
-        await saveService(data);
+        await saveService(serviceData);
         toast.success('Serviço criado com sucesso!');
       }
       navigate('/services');

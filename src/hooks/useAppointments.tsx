@@ -39,7 +39,13 @@ export const useAppointments = () => {
         return;
       }
 
-      setAppointments(data || []);
+      // Type cast the status field to ensure it matches our interface
+      const typedAppointments: Appointment[] = (data || []).map(appointment => ({
+        ...appointment,
+        status: appointment.status as 'confirmed' | 'pending' | 'cancelled'
+      }));
+
+      setAppointments(typedAppointments);
     } catch (error) {
       console.error('Error loading appointments:', error);
     } finally {
@@ -57,8 +63,14 @@ export const useAppointments = () => {
 
       if (error) throw error;
 
-      setAppointments(prev => [...prev, data]);
-      return data;
+      // Type cast the returned data
+      const typedAppointment: Appointment = {
+        ...data,
+        status: data.status as 'confirmed' | 'pending' | 'cancelled'
+      };
+
+      setAppointments(prev => [...prev, typedAppointment]);
+      return typedAppointment;
     } catch (error) {
       console.error('Error saving appointment:', error);
       throw error;
@@ -76,11 +88,17 @@ export const useAppointments = () => {
 
       if (error) throw error;
 
+      // Type cast the returned data
+      const typedAppointment: Appointment = {
+        ...data,
+        status: data.status as 'confirmed' | 'pending' | 'cancelled'
+      };
+
       setAppointments(prev => prev.map(appointment => 
-        appointment.id === id ? data : appointment
+        appointment.id === id ? typedAppointment : appointment
       ));
 
-      return data;
+      return typedAppointment;
     } catch (error) {
       console.error('Error updating appointment:', error);
       throw error;
