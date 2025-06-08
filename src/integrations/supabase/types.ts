@@ -9,6 +9,72 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          clinic_id: string
+          clinic_name: string
+          created_at: string
+          date: string
+          duration: number
+          id: string
+          notes: string | null
+          patient_id: string
+          patient_name: string
+          service_id: string
+          service_name: string
+          status: string
+          time: string
+          updated_at: string
+        }
+        Insert: {
+          clinic_id: string
+          clinic_name: string
+          created_at?: string
+          date: string
+          duration: number
+          id?: string
+          notes?: string | null
+          patient_id: string
+          patient_name: string
+          service_id: string
+          service_name: string
+          status?: string
+          time: string
+          updated_at?: string
+        }
+        Update: {
+          clinic_id?: string
+          clinic_name?: string
+          created_at?: string
+          date?: string
+          duration?: number
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          patient_name?: string
+          service_id?: string
+          service_name?: string
+          status?: string
+          time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clínica"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clínica: {
         Row: {
           Bairro: string
@@ -116,6 +182,36 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      services: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string
+          duration: number
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description: string
+          duration: number
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string
+          duration?: number
+          id?: string
+          name?: string
           updated_at?: string
         }
         Relationships: []

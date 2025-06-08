@@ -32,23 +32,9 @@ import { mockPatients } from '@/models/patient';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { mockClinics } from '@/models/clinic';
-
-const treatments = [
-  { id: '1', name: 'Limpeza', duration: 60 },
-  { id: '2', name: 'Clareamento Dental', duration: 90 },
-  { id: '3', name: 'Avaliação Invisalign', duration: 30 },
-  { id: '4', name: 'Botox', duration: 60 },
-  { id: '5', name: 'Preenchimento', duration: 60 },
-  { id: '6', name: 'Manutenção Invisalign', duration: 30 },
-  { id: '7', name: 'Bioestimulador de colágeno', duration: 90 },
-  { id: '8', name: 'Ultrassom microfocado', duration: 60 },
-  { id: '9', name: 'Skinbooster', duration: 60 },
-  { id: '10', name: 'Bioregeneração dérmica', duration: 90 },
-  { id: '11', name: 'Radiofrequência', duration: 60 },
-  { id: '12', name: 'Jato de plasma', duration: 60 },
-  { id: '13', name: 'Lipoenzimática de papada', duration: 90 },
-];
+import { useServices } from '@/hooks/useServices';
+import { useClinics } from '@/hooks/useClinics';
+import { useAppointments } from '@/hooks/useAppointments';
 
 const formSchema = z.object({
   patientId: z.string().min(1, { message: 'Selecione um paciente' }),
@@ -75,6 +61,10 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
   initialDate,
   initialTime,
 }) => {
+  const { services } = useServices();
+  const { clinics } = useClinics();
+  const { saveAppointment } = useAppointments();
+  
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -90,10 +80,35 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
 
   const onSubmit = async (data: AppointmentFormValues) => {
     try {
-      // Simulando envio dos dados para uma API
-      console.log('Form data:', data);
+      // Get selected patient, service, and clinic names
+      const selectedPatient = mockPatients.find(p => p.id === data.patientId);
+      const selectedService = services.find(s => s.id === data.serviceId);
+      const selectedClinic = clinics.find(c => c.id === data.clinicId);
+
+      if (!selectedPatient || !selectedService || !selectedClinic) {
+        toast.error('Erro: Dados selecionados inválidos');
+        return;
+      }
+
+      // Create appointment data
+      const appointmentData = {
+        patient_id: data.patientId,
+        patient_name: selectedPatient.name,
+        service_id: data.serviceId,
+        service_name: selectedService.name,
+        clinic_id: data.clinicId,
+        clinic_name: selectedClinic.name,
+        date: data.date,
+        time: data.time,
+        duration: data.duration,
+        status: 'pending' as const,
+        notes: data.notes || undefined,
+      };
+
+      await saveAppointment(appointmentData);
       toast.success('Consulta agendada com sucesso!');
       onClose();
+      form.reset();
     } catch (error) {
       toast.error('Erro ao agendar consulta');
       console.error('Error submitting form:', error);
@@ -104,12 +119,12 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
   const watchServiceId = form.watch('serviceId');
   React.useEffect(() => {
     if (watchServiceId) {
-      const selectedService = treatments.find(t => t.id === watchServiceId);
+      const selectedService = services.find(s => s.id === watchServiceId);
       if (selectedService) {
         form.setValue('duration', selectedService.duration);
       }
     }
-  }, [watchServiceId, form]);
+  }, [watchServiceId, services, form]);
 
   return (
     <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
@@ -167,7 +182,9 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {treatments.map((service) => (
+                      {services
+                        .filter(service => service.active)
+                        .map((service) => (
                         <SelectItem key={service.id} value={service.id}>
                           {service.name} ({service.duration} min)
                         </SelectItem>
@@ -194,7 +211,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {mockClinics.map((clinic) => (
+                      {clinics.map((clinic) => (
                         <SelectItem key={clinic.id} value={clinic.id}>
                           {clinic.name}
                         </SelectItem>

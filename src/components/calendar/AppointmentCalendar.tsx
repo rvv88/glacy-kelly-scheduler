@@ -12,12 +12,12 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, Clock, Calendar as CalendarIcon, Building } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Calendar as CalendarIcon, Building, Loader2 } from 'lucide-react';
 import { format, addDays, parseISO, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import AppointmentForm from './AppointmentForm';
-import { mockAppointments } from '@/models/appointment';
+import { useAppointments } from '@/hooks/useAppointments';
 
 const AppointmentCalendar: React.FC = () => {
   const today = new Date();
@@ -25,9 +25,10 @@ const AppointmentCalendar: React.FC = () => {
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('day');
   const [isAppointmentFormOpen, setIsAppointmentFormOpen] = useState(false);
   const [selectedTime, setSelectedTime] = useState<string | undefined>();
+  const { appointments, loading } = useAppointments();
 
   // Filtra os compromissos para o dia selecionado
-  const dayAppointments = mockAppointments.filter(app => 
+  const dayAppointments = appointments.filter(app => 
     selectedDate && isSameDay(parseISO(app.date), selectedDate)
   );
 
@@ -46,6 +47,15 @@ const AppointmentCalendar: React.FC = () => {
 
   // Função para renderizar os compromissos do dia
   const renderDayView = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Carregando agenda...</span>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-4">
         <div className="flex justify-between items-center">
@@ -78,20 +88,25 @@ const AppointmentCalendar: React.FC = () => {
                   </div>
                   {appointment && (
                     <Badge variant={appointment.status === 'confirmed' ? 'default' : 'outline'}>
-                      {appointment.status === 'confirmed' ? 'Confirmado' : 'Pendente'}
+                      {appointment.status === 'confirmed' ? 'Confirmado' : appointment.status === 'pending' ? 'Pendente' : 'Cancelado'}
                     </Badge>
                   )}
                 </CardHeader>
                 {appointment ? (
                   <CardContent className="py-2 px-4">
-                    <div className="font-medium">{appointment.patientName}</div>
+                    <div className="font-medium">{appointment.patient_name}</div>
                     <div className="text-sm text-muted-foreground">
-                      {appointment.serviceName} - {appointment.duration} min
+                      {appointment.service_name} - {appointment.duration} min
                     </div>
                     <div className="text-xs flex items-center gap-1 text-muted-foreground mt-1">
                       <Building className="h-3 w-3" />
-                      <span>{appointment.clinicName}</span>
+                      <span>{appointment.clinic_name}</span>
                     </div>
+                    {appointment.notes && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Obs: {appointment.notes}
+                      </div>
+                    )}
                   </CardContent>
                 ) : (
                   <CardContent className="py-4 px-4 flex justify-center items-center">
@@ -169,7 +184,12 @@ const AppointmentCalendar: React.FC = () => {
               </TabsContent>
               <TabsContent value="list">
                 <div className="space-y-4">
-                  {dayAppointments.length > 0 ? (
+                  {loading ? (
+                    <div className="flex items-center justify-center h-32">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                      <span className="ml-2">Carregando...</span>
+                    </div>
+                  ) : dayAppointments.length > 0 ? (
                     dayAppointments.map(app => (
                       <Card key={app.id} className="border-dental-400 bg-dental-50 hover:shadow transition-all">
                         <CardHeader className="py-2 px-4 flex flex-row items-center justify-between">
@@ -178,18 +198,23 @@ const AppointmentCalendar: React.FC = () => {
                             <span>{app.time}</span>
                           </div>
                           <Badge variant={app.status === 'confirmed' ? 'default' : 'outline'}>
-                            {app.status === 'confirmed' ? 'Confirmado' : 'Pendente'}
+                            {app.status === 'confirmed' ? 'Confirmado' : app.status === 'pending' ? 'Pendente' : 'Cancelado'}
                           </Badge>
                         </CardHeader>
                         <CardContent className="py-2 px-4">
-                          <div className="font-medium">{app.patientName}</div>
+                          <div className="font-medium">{app.patient_name}</div>
                           <div className="text-sm text-muted-foreground">
-                            {app.serviceName} - {app.duration} min
+                            {app.service_name} - {app.duration} min
                           </div>
                           <div className="text-xs flex items-center gap-1 text-muted-foreground mt-1">
                             <Building className="h-3 w-3" />
-                            <span>{app.clinicName}</span>
+                            <span>{app.clinic_name}</span>
                           </div>
+                          {app.notes && (
+                            <div className="text-xs text-muted-foreground mt-1">
+                              Obs: {app.notes}
+                            </div>
+                          )}
                         </CardContent>
                       </Card>
                     ))

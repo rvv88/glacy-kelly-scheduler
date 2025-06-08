@@ -20,63 +20,49 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { Search, MoreVertical, Plus, Clock } from 'lucide-react';
+import { Search, MoreVertical, Plus, Clock, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-// Mockup de dados para os tipos de atendimento
-const mockServices = [
-  { 
-    id: '1', 
-    name: 'Limpeza', 
-    duration: 60,
-    description: 'Limpeza dental completa com remoção de tártaro',
-    status: 'active'
-  },
-  { 
-    id: '2', 
-    name: 'Clareamento Dental', 
-    duration: 90,
-    description: 'Procedimento estético para clarear os dentes',
-    status: 'active'
-  },
-  { 
-    id: '3', 
-    name: 'Avaliação Invisalign', 
-    duration: 45,
-    description: 'Consulta para avaliação de tratamento com alinhadores transparentes',
-    status: 'active'
-  },
-  { 
-    id: '4', 
-    name: 'Botox', 
-    duration: 60,
-    description: 'Aplicação de toxina botulínica para fins estéticos e terapêuticos',
-    status: 'active'
-  },
-  { 
-    id: '5', 
-    name: 'Preenchimento', 
-    duration: 60,
-    description: 'Preenchimento facial com ácido hialurônico',
-    status: 'active'
-  },
-  { 
-    id: '6', 
-    name: 'Manutenção Invisalign', 
-    duration: 30,
-    description: 'Consulta de acompanhamento do tratamento com Invisalign',
-    status: 'active'
-  },
-];
+import { useServices } from '@/hooks/useServices';
+import { toast } from 'sonner';
 
 const ServicesList: React.FC = () => {
+  const { services, loading, deleteService, toggleServiceStatus } = useServices();
   const [searchTerm, setSearchTerm] = useState<string>('');
   
   // Filtra os serviços com base na busca
-  const filteredServices = mockServices.filter(service =>
+  const filteredServices = services.filter(service =>
     service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     service.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleDelete = async (id: string, name: string) => {
+    if (window.confirm(`Tem certeza que deseja excluir o serviço "${name}"?`)) {
+      try {
+        await deleteService(id);
+        toast.success('Serviço excluído com sucesso!');
+      } catch (error) {
+        toast.error('Erro ao excluir serviço. Tente novamente.');
+      }
+    }
+  };
+
+  const handleToggleStatus = async (id: string, currentStatus: boolean) => {
+    try {
+      await toggleServiceStatus(id, !currentStatus);
+      toast.success(`Serviço ${!currentStatus ? 'ativado' : 'desativado'} com sucesso!`);
+    } catch (error) {
+      toast.error('Erro ao alterar status do serviço. Tente novamente.');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Carregando serviços...</span>
+      </div>
+    );
+  }
 
   return (
     <Card>
@@ -132,8 +118,8 @@ const ServicesList: React.FC = () => {
                     </TableCell>
                     <TableCell className="max-w-xs truncate">{service.description}</TableCell>
                     <TableCell>
-                      <Badge variant={service.status === 'active' ? 'default' : 'outline'}>
-                        {service.status === 'active' ? 'Ativo' : 'Inativo'}
+                      <Badge variant={service.active ? 'default' : 'outline'}>
+                        {service.active ? 'Ativo' : 'Inativo'}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -150,11 +136,16 @@ const ServicesList: React.FC = () => {
                           <DropdownMenuItem asChild>
                             <Link to={`/services/edit/${service.id}`}>Editar</Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            {service.status === 'active' ? 'Desativar' : 'Ativar'}
+                          <DropdownMenuItem 
+                            onClick={() => handleToggleStatus(service.id, service.active)}
+                          >
+                            {service.active ? 'Desativar' : 'Ativar'}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive">
+                          <DropdownMenuItem 
+                            className="text-destructive"
+                            onClick={() => handleDelete(service.id, service.name)}
+                          >
                             Excluir
                           </DropdownMenuItem>
                         </DropdownMenuContent>

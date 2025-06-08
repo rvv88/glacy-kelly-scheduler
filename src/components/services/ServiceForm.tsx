@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,7 +19,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { ArrowLeft, Save } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useServices, Service } from '@/hooks/useServices';
 
 const formSchema = z.object({
   name: z.string().min(3, { message: 'Nome deve ter pelo menos 3 caracteres' }),
@@ -30,16 +31,15 @@ const formSchema = z.object({
 
 type ServiceFormValues = z.infer<typeof formSchema>;
 
-interface ServiceFormProps {
-  initialData?: ServiceFormValues;
-}
-
-const ServiceForm: React.FC<ServiceFormProps> = ({ initialData }) => {
+const ServiceForm: React.FC = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const { services, saveService, updateService } = useServices();
+  const isEditing = Boolean(id);
   
   const form = useForm<ServiceFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData || {
+    defaultValues: {
       name: '',
       duration: 30,
       description: '',
@@ -47,14 +47,33 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData }) => {
     }
   });
 
+  // Load service data if editing
+  useEffect(() => {
+    if (isEditing && id && services.length > 0) {
+      const service = services.find(s => s.id === id);
+      if (service) {
+        form.reset({
+          name: service.name,
+          duration: service.duration,
+          description: service.description,
+          active: service.active,
+        });
+      }
+    }
+  }, [isEditing, id, services, form]);
+
   const onSubmit = async (data: ServiceFormValues) => {
     try {
-      // Simulando envio dos dados para uma API
-      console.log('Form data:', data);
-      toast.success('Serviço salvo com sucesso!');
+      if (isEditing && id) {
+        await updateService(id, data);
+        toast.success('Serviço atualizado com sucesso!');
+      } else {
+        await saveService(data);
+        toast.success('Serviço criado com sucesso!');
+      }
       navigate('/services');
     } catch (error) {
-      toast.error('Erro ao salvar serviço');
+      toast.error('Erro ao salvar serviço. Tente novamente.');
       console.error('Error submitting form:', error);
     }
   };
@@ -72,10 +91,10 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData }) => {
           </Button>
           <div>
             <CardTitle>
-              {initialData ? 'Editar Serviço' : 'Novo Serviço'}
+              {isEditing ? 'Editar Serviço' : 'Novo Serviço'}
             </CardTitle>
             <CardDescription>
-              {initialData
+              {isEditing
                 ? 'Atualização de tipo de atendimento'
                 : 'Cadastro de novo tipo de atendimento'}
             </CardDescription>
