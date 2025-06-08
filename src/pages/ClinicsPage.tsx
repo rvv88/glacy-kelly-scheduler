@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -99,13 +98,26 @@ const ClinicsPage: React.FC = () => {
 
   const onSubmit = async (data: ClinicFormValues) => {
     try {
+      // Ensure all required fields are present for the Clinic interface
+      const clinicData: Omit<Clinic, 'id'> = {
+        name: data.name,
+        street: data.street,
+        number: data.number,
+        complement: data.complement,
+        neighborhood: data.neighborhood,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zipCode,
+        phone: data.phone,
+      };
+
       if (editingClinic) {
         // Update existing clinic
-        await updateClinic(editingClinic.id, data);
+        await updateClinic(editingClinic.id, clinicData);
         toast.success('Clínica atualizada com sucesso!');
       } else {
         // Add new clinic
-        await saveClinic(data);
+        await saveClinic(clinicData);
         toast.success('Clínica cadastrada com sucesso!');
       }
       closeDialog();
