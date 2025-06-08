@@ -13,6 +13,7 @@ export const useClinics = () => {
 
   const loadClinics = async () => {
     try {
+      console.log('Carregando clínicas...');
       const { data, error } = await supabase
         .from('clínica')
         .select('*')
@@ -22,6 +23,8 @@ export const useClinics = () => {
         console.error('Error loading clinics:', error);
         return;
       }
+
+      console.log('Dados recebidos do Supabase:', data);
 
       // Convert Supabase data to our Clinic interface
       const mappedClinics: Clinic[] = data.map(clinic => ({
@@ -37,6 +40,7 @@ export const useClinics = () => {
         phone: clinic.Telefone || '',
       }));
 
+      console.log('Clínicas mapeadas:', mappedClinics);
       setClinics(mappedClinics);
     } catch (error) {
       console.error('Error loading clinics:', error);
@@ -47,23 +51,34 @@ export const useClinics = () => {
 
   const saveClinic = async (clinicData: Omit<Clinic, 'id'>) => {
     try {
+      console.log('Salvando clínica:', clinicData);
+      
+      const dataToInsert = {
+        'Nome da Unidade': clinicData.name,
+        Logradouro: clinicData.street,
+        Número: clinicData.number,
+        Complemento: clinicData.complement || null,
+        Bairro: clinicData.neighborhood,
+        Cidade: clinicData.city,
+        Estado: clinicData.state,
+        CEP: clinicData.zipCode,
+        Telefone: clinicData.phone || null,
+      };
+
+      console.log('Dados a serem inseridos:', dataToInsert);
+
       const { data, error } = await supabase
         .from('clínica')
-        .insert({
-          'Nome da Unidade': clinicData.name,
-          Logradouro: clinicData.street,
-          Número: clinicData.number,
-          Complemento: clinicData.complement || null,
-          Bairro: clinicData.neighborhood,
-          Cidade: clinicData.city,
-          Estado: clinicData.state,
-          CEP: clinicData.zipCode,
-          Telefone: clinicData.phone || null,
-        })
+        .insert(dataToInsert)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao inserir clínica:', error);
+        throw error;
+      }
+
+      console.log('Clínica inserida com sucesso:', data);
 
       // Convert and add to local state
       const newClinic: Clinic = {

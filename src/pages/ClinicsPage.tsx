@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,7 +36,7 @@ const formSchema = z.object({
   city: z.string().min(2, { message: 'Cidade deve ter pelo menos 2 caracteres' }),
   state: z.string().min(2, { message: 'Estado deve ter pelo menos 2 caracteres' }),
   zipCode: z.string().min(8, { message: 'CEP inválido' }),
-  phone: z.string().min(10, { message: 'Telefone inválido' }),
+  phone: z.string().optional().or(z.literal('')),
 });
 
 type ClinicFormValues = z.infer<typeof formSchema>;
@@ -72,7 +73,7 @@ const ClinicsPage: React.FC = () => {
         city: clinic.city,
         state: clinic.state,
         zipCode: clinic.zipCode,
-        phone: clinic.phone,
+        phone: clinic.phone || '',
       });
     } else {
       setEditingClinic(null);
@@ -103,13 +104,15 @@ const ClinicsPage: React.FC = () => {
         name: data.name,
         street: data.street,
         number: data.number,
-        complement: data.complement,
+        complement: data.complement || undefined,
         neighborhood: data.neighborhood,
         city: data.city,
         state: data.state,
         zipCode: data.zipCode,
-        phone: data.phone,
+        phone: data.phone || '',
       };
+
+      console.log('Enviando dados da clínica:', clinicData);
 
       if (editingClinic) {
         // Update existing clinic
@@ -122,6 +125,7 @@ const ClinicsPage: React.FC = () => {
       }
       closeDialog();
     } catch (error) {
+      console.error('Erro ao salvar clínica:', error);
       toast.error('Erro ao salvar clínica. Tente novamente.');
     }
   };
@@ -169,7 +173,7 @@ const ClinicsPage: React.FC = () => {
                 <strong>CEP:</strong> {clinic.zipCode}
               </div>
               <div className="text-sm">
-                <strong>Telefone:</strong> {clinic.phone}
+                <strong>Telefone:</strong> {clinic.phone || 'Não informado'}
               </div>
             </CardContent>
             <CardFooter className="flex justify-end gap-2">
@@ -324,7 +328,7 @@ const ClinicsPage: React.FC = () => {
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Telefone</FormLabel>
+                      <FormLabel>Telefone (opcional)</FormLabel>
                       <FormControl>
                         <Input placeholder="(00) 00000-0000" {...field} />
                       </FormControl>
