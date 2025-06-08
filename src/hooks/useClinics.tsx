@@ -16,7 +16,7 @@ export const useClinics = () => {
       const { data, error } = await supabase
         .from('clínica')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('id', { ascending: false });
 
       if (error) {
         console.error('Error loading clinics:', error);
