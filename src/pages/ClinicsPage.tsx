@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Edit, Trash2, Loader2 } from 'lucide-react';
-import { Clinic, getFullAddress } from '@/models/clinic';
+import { Clinic } from '@/models/clinic';
 import { toast } from 'sonner';
 import { useClinics } from '@/hooks/useClinics';
 import {
@@ -99,7 +99,6 @@ const ClinicsPage: React.FC = () => {
 
   const onSubmit = async (data: ClinicFormValues) => {
     try {
-      // Ensure all required fields are present for the Clinic interface
       const clinicData: Omit<Clinic, 'id'> = {
         name: data.name,
         street: data.street,
@@ -115,11 +114,9 @@ const ClinicsPage: React.FC = () => {
       console.log('Enviando dados da clínica:', clinicData);
 
       if (editingClinic) {
-        // Update existing clinic
         await updateClinic(editingClinic.id, clinicData);
         toast.success('Clínica atualizada com sucesso!');
       } else {
-        // Add new clinic
         await saveClinic(clinicData);
         toast.success('Clínica cadastrada com sucesso!');
       }
@@ -167,7 +164,10 @@ const ClinicsPage: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="text-sm">
-                <strong>Endereço:</strong> {getFullAddress(clinic)}
+                <strong>Endereço:</strong> {clinic.street}, {clinic.number}
+                {clinic.complement && `, ${clinic.complement}`}
+                <br />
+                {clinic.neighborhood}, {clinic.city} - {clinic.state}
               </div>
               <div className="text-sm">
                 <strong>CEP:</strong> {clinic.zipCode}
@@ -298,7 +298,7 @@ const ClinicsPage: React.FC = () => {
                   name="state"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Estado</FormLabel>
+                      <FormLabel>UF</FormLabel>
                       <FormControl>
                         <Input placeholder="UF" {...field} />
                       </FormControl>

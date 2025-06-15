@@ -60,13 +60,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "appointments_clinic_id_fkey"
-            columns: ["clinic_id"]
-            isOneToOne: false
-            referencedRelation: "clínica"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "appointments_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
@@ -75,42 +68,48 @@ export type Database = {
           },
         ]
       }
-      clínica: {
+      clinics: {
         Row: {
-          Bairro: string
-          CEP: string
-          Cidade: string
-          Complemento: string | null
-          Estado: string
+          city: string
+          complement: string | null
+          created_at: string
           id: string
-          Logradouro: string
-          "Nome da Unidade": string
-          Número: string
-          Telefone: string | null
+          neighborhood: string
+          number: string
+          phone: string | null
+          state: string
+          street: string
+          unit_name: string
+          updated_at: string
+          zip_code: string
         }
         Insert: {
-          Bairro: string
-          CEP: string
-          Cidade: string
-          Complemento?: string | null
-          Estado: string
+          city: string
+          complement?: string | null
+          created_at?: string
           id?: string
-          Logradouro: string
-          "Nome da Unidade": string
-          Número: string
-          Telefone?: string | null
+          neighborhood: string
+          number: string
+          phone?: string | null
+          state: string
+          street: string
+          unit_name: string
+          updated_at?: string
+          zip_code: string
         }
         Update: {
-          Bairro?: string
-          CEP?: string
-          Cidade?: string
-          Complemento?: string | null
-          Estado?: string
+          city?: string
+          complement?: string | null
+          created_at?: string
           id?: string
-          Logradouro?: string
-          "Nome da Unidade"?: string
-          Número?: string
-          Telefone?: string | null
+          neighborhood?: string
+          number?: string
+          phone?: string | null
+          state?: string
+          street?: string
+          unit_name?: string
+          updated_at?: string
+          zip_code?: string
         }
         Relationships: []
       }

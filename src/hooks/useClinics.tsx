@@ -15,9 +15,9 @@ export const useClinics = () => {
     try {
       console.log('Carregando clínicas...');
       const { data, error } = await supabase
-        .from('clínica')
+        .from('clinics')
         .select('*')
-        .order('id', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error loading clinics:', error);
@@ -29,15 +29,15 @@ export const useClinics = () => {
       // Convert Supabase data to our Clinic interface
       const mappedClinics: Clinic[] = data.map(clinic => ({
         id: clinic.id,
-        name: clinic['Nome da Unidade'],
-        street: clinic.Logradouro,
-        number: clinic.Número,
-        complement: clinic.Complemento || undefined,
-        neighborhood: clinic.Bairro,
-        city: clinic.Cidade,
-        state: clinic.Estado,
-        zipCode: clinic.CEP,
-        phone: clinic.Telefone || '',
+        name: clinic.unit_name,
+        street: clinic.street,
+        number: clinic.number,
+        complement: clinic.complement || undefined,
+        neighborhood: clinic.neighborhood,
+        city: clinic.city,
+        state: clinic.state,
+        zipCode: clinic.zip_code,
+        phone: clinic.phone || '',
       }));
 
       console.log('Clínicas mapeadas:', mappedClinics);
@@ -54,21 +54,21 @@ export const useClinics = () => {
       console.log('Salvando clínica:', clinicData);
       
       const dataToInsert = {
-        'Nome da Unidade': clinicData.name,
-        Logradouro: clinicData.street,
-        Número: clinicData.number,
-        Complemento: clinicData.complement || null,
-        Bairro: clinicData.neighborhood,
-        Cidade: clinicData.city,
-        Estado: clinicData.state,
-        CEP: clinicData.zipCode,
-        Telefone: clinicData.phone || null,
+        unit_name: clinicData.name,
+        street: clinicData.street,
+        number: clinicData.number,
+        complement: clinicData.complement || null,
+        neighborhood: clinicData.neighborhood,
+        city: clinicData.city,
+        state: clinicData.state,
+        zip_code: clinicData.zipCode,
+        phone: clinicData.phone || null,
       };
 
       console.log('Dados a serem inseridos:', dataToInsert);
 
       const { data, error } = await supabase
-        .from('clínica')
+        .from('clinics')
         .insert(dataToInsert)
         .select()
         .single();
@@ -83,15 +83,15 @@ export const useClinics = () => {
       // Convert and add to local state
       const newClinic: Clinic = {
         id: data.id,
-        name: data['Nome da Unidade'],
-        street: data.Logradouro,
-        number: data.Número,
-        complement: data.Complemento || undefined,
-        neighborhood: data.Bairro,
-        city: data.Cidade,
-        state: data.Estado,
-        zipCode: data.CEP,
-        phone: data.Telefone || '',
+        name: data.unit_name,
+        street: data.street,
+        number: data.number,
+        complement: data.complement || undefined,
+        neighborhood: data.neighborhood,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zip_code,
+        phone: data.phone || '',
       };
 
       setClinics(prev => [newClinic, ...prev]);
@@ -105,17 +105,17 @@ export const useClinics = () => {
   const updateClinic = async (id: string, clinicData: Omit<Clinic, 'id'>) => {
     try {
       const { data, error } = await supabase
-        .from('clínica')
+        .from('clinics')
         .update({
-          'Nome da Unidade': clinicData.name,
-          Logradouro: clinicData.street,
-          Número: clinicData.number,
-          Complemento: clinicData.complement || null,
-          Bairro: clinicData.neighborhood,
-          Cidade: clinicData.city,
-          Estado: clinicData.state,
-          CEP: clinicData.zipCode,
-          Telefone: clinicData.phone || null,
+          unit_name: clinicData.name,
+          street: clinicData.street,
+          number: clinicData.number,
+          complement: clinicData.complement || null,
+          neighborhood: clinicData.neighborhood,
+          city: clinicData.city,
+          state: clinicData.state,
+          zip_code: clinicData.zipCode,
+          phone: clinicData.phone || null,
         })
         .eq('id', id)
         .select()
@@ -126,15 +126,15 @@ export const useClinics = () => {
       // Convert and update local state
       const updatedClinic: Clinic = {
         id: data.id,
-        name: data['Nome da Unidade'],
-        street: data.Logradouro,
-        number: data.Número,
-        complement: data.Complemento || undefined,
-        neighborhood: data.Bairro,
-        city: data.Cidade,
-        state: data.Estado,
-        zipCode: data.CEP,
-        phone: data.Telefone || '',
+        name: data.unit_name,
+        street: data.street,
+        number: data.number,
+        complement: data.complement || undefined,
+        neighborhood: data.neighborhood,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zip_code,
+        phone: data.phone || '',
       };
 
       setClinics(prev => prev.map(clinic => 
@@ -151,7 +151,7 @@ export const useClinics = () => {
   const deleteClinic = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('clínica')
+        .from('clinics')
         .delete()
         .eq('id', id);
 
