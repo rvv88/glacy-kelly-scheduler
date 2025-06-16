@@ -76,18 +76,8 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
                     <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <Link to="/profile" className="cursor-pointer flex w-full">
-                        Perfil
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/appointments" className="cursor-pointer flex w-full">
-                        Meus Agendamentos
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/settings" className="cursor-pointer flex w-full">
-                        Configurações
+                      <Link to="/patients" className="cursor-pointer flex w-full">
+                        Meus Dados
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />

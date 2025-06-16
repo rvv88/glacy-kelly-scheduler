@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,6 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   Select,
   SelectContent,
@@ -23,7 +24,7 @@ import {
   SelectValue, 
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Camera, Upload, User as UserIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { mockClinics } from '@/models/clinic';
 import { useAuth } from '@/contexts/AuthContext';
@@ -48,8 +49,10 @@ interface PatientFormProps {
 
 const PatientForm: React.FC<PatientFormProps> = ({ initialData }) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { patientProfile, hasProfile, savePatientProfile } = usePatientProfile();
+  const [avatarUrl, setAvatarUrl] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const form = useForm<PatientFormValues>({
     resolver: zodResolver(formSchema),
@@ -79,7 +82,40 @@ const PatientForm: React.FC<PatientFormProps> = ({ initialData }) => {
         notes: patientProfile.notes || '',
       });
     }
-  }, [patientProfile, form, initialData]);
+    // Set initial avatar from profile
+    if (profile?.avatar_url) {
+      setAvatarUrl(profile.avatar_url);
+    }
+  }, [patientProfile, profile, form, initialData]);
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Por favor, selecione uma imagem.');
+      return;
+    }
+    
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('A imagem deve ter no máximo 5MB.');
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setAvatarUrl(event.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const onSubmit = async (data: PatientFormValues) => {
     if (!user) {
@@ -109,179 +145,225 @@ const PatientForm: React.FC<PatientFormProps> = ({ initialData }) => {
   const isFirstTime = !hasProfile;
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          {!isFirstTime && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate('/patients')}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          )}
-          <div>
-            <CardTitle>
-              {isFirstTime ? 'Complete seu Perfil' : hasProfile ? 'Editar Meus Dados' : 'Meus Dados'}
-            </CardTitle>
-            <CardDescription>
-              {isFirstTime 
-                ? 'Complete suas informações para continuar'
-                : 'Visualize e edite suas informações pessoais'
-              }
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome completo</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Seu nome completo" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="cpf"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>CPF</FormLabel>
-                    <FormControl>
-                      <Input placeholder="000.000.000-00" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="seu@email.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Telefone</FormLabel>
-                    <FormControl>
-                      <Input placeholder="(00) 00000-0000" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="birthdate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data de Nascimento</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Endereço</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Endereço completo" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="clinicId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Clínica</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione uma clínica" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {mockClinics.map((clinic) => (
-                          <SelectItem key={clinic.id} value={clinic.id}>
-                            {clinic.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      {/* Profile Picture Section */}
+      <div className="lg:col-span-1">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-center">Foto de Perfil</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center space-y-4">
+            <div className="relative cursor-pointer" onClick={handleAvatarClick}>
+              <Avatar className="h-32 w-32">
+                <AvatarImage src={avatarUrl} alt="Foto de perfil" />
+                <AvatarFallback className="bg-primary/10">
+                  <UserIcon className="h-16 w-16 text-primary/80" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="absolute bottom-0 right-0 bg-primary text-white rounded-full p-2">
+                <Camera className="h-4 w-4" />
+              </div>
             </div>
-
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Observações</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Informações adicionais" 
-                      className="h-24"
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept="image/*"
+              className="hidden"
+              aria-label="Upload foto de perfil"
             />
+            <Button 
+              variant="outline" 
+              onClick={handleAvatarClick} 
+              className="flex items-center gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              Alterar foto
+            </Button>
+            <p className="text-sm text-muted-foreground text-center">
+              Clique na foto ou no botão para fazer upload de uma nova imagem
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
-            <div className="flex justify-end space-x-2">
+      {/* Form Section */}
+      <div className="lg:col-span-3">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
               {!isFirstTime && (
                 <Button
-                  type="button"
-                  variant="outline"
+                  variant="ghost"
+                  size="icon"
                   onClick={() => navigate('/patients')}
                 >
-                  Cancelar
+                  <ArrowLeft className="h-5 w-5" />
                 </Button>
               )}
-              <Button type="submit">
-                <Save className="mr-2 h-4 w-4" />
-                {isFirstTime ? 'Completar Cadastro' : 'Salvar Alterações'}
-              </Button>
+              <div>
+                <CardTitle>
+                  {isFirstTime ? 'Complete seu Perfil' : hasProfile ? 'Editar Meus Dados' : 'Meus Dados'}
+                </CardTitle>
+                <CardDescription>
+                  {isFirstTime 
+                    ? 'Complete suas informações para continuar'
+                    : 'Visualize e edite suas informações pessoais'
+                  }
+                </CardDescription>
+              </div>
             </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome completo</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Seu nome completo" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="cpf"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>CPF</FormLabel>
+                        <FormControl>
+                          <Input placeholder="000.000.000-00" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input placeholder="seu@email.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Telefone</FormLabel>
+                        <FormControl>
+                          <Input placeholder="(00) 00000-0000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="birthdate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data de Nascimento</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Endereço</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Endereço completo" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="clinicId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Clínica</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione uma clínica" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {mockClinics.map((clinic) => (
+                              <SelectItem key={clinic.id} value={clinic.id}>
+                                {clinic.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Observações</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Informações adicionais" 
+                          className="h-24"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-end space-x-2">
+                  {!isFirstTime && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => navigate('/patients')}
+                    >
+                      Cancelar
+                    </Button>
+                  )}
+                  <Button type="submit">
+                    <Save className="mr-2 h-4 w-4" />
+                    {isFirstTime ? 'Completar Cadastro' : 'Salvar Alterações'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 };
 
