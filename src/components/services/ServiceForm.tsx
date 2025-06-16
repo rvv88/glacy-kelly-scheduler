@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -63,13 +64,16 @@ const ServiceForm: React.FC = () => {
 
   const onSubmit = async (data: ServiceFormValues) => {
     try {
-      // Ensure all required fields are present with proper types
+      console.log('Submitting service data:', data);
+      
       const serviceData = {
         name: data.name,
-        duration: data.duration,
+        duration: Number(data.duration), // Ensure it's a number
         description: data.description,
         active: data.active,
       };
+
+      console.log('Processed service data:', serviceData);
 
       if (isEditing && id) {
         await updateService(id, serviceData);
@@ -80,8 +84,8 @@ const ServiceForm: React.FC = () => {
       }
       navigate('/services');
     } catch (error) {
-      toast.error('Erro ao salvar serviço. Tente novamente.');
       console.error('Error submitting form:', error);
+      toast.error('Erro ao salvar serviço. Tente novamente.');
     }
   };
 
