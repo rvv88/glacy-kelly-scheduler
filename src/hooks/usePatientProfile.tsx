@@ -36,6 +36,7 @@ export const usePatientProfile = () => {
     if (!user) return;
 
     try {
+      console.log('Loading patient profile for user:', user.id);
       const { data, error } = await supabase
         .from('patient_profiles')
         .select('*')
@@ -47,6 +48,7 @@ export const usePatientProfile = () => {
       }
 
       if (data) {
+        console.log('Patient profile found:', data);
         const profile: PatientProfile = {
           id: data.id,
           name: data.name,
@@ -62,6 +64,7 @@ export const usePatientProfile = () => {
         setPatientProfile(profile);
         setHasProfile(true);
       } else {
+        console.log('No patient profile found for user');
         setHasProfile(false);
       }
     } catch (error) {
@@ -75,23 +78,62 @@ export const usePatientProfile = () => {
     if (!user) throw new Error('User not authenticated');
 
     try {
-      const { data, error } = await supabase
-        .from('patient_profiles')
-        .upsert({
-          user_id: user.id,
-          name: profileData.name,
-          email: profileData.email,
-          phone: profileData.phone,
-          cpf: profileData.cpf,
-          birthdate: profileData.birthdate,
-          address: profileData.address,
-          clinic_id: profileData.clinicId,
-          notes: profileData.notes || null,
-        })
-        .select()
-        .single();
+      console.log('Saving patient profile:', profileData);
+      console.log('Has existing profile:', hasProfile);
+      console.log('Existing profile ID:', patientProfile?.id);
 
-      if (error) throw error;
+      let data, error;
+
+      if (hasProfile && patientProfile?.id) {
+        // Update existing profile
+        console.log('Updating existing profile with ID:', patientProfile.id);
+        const result = await supabase
+          .from('patient_profiles')
+          .update({
+            name: profileData.name,
+            email: profileData.email,
+            phone: profileData.phone,
+            cpf: profileData.cpf,
+            birthdate: profileData.birthdate,
+            address: profileData.address,
+            clinic_id: profileData.clinicId,
+            notes: profileData.notes || null,
+          })
+          .eq('id', patientProfile.id)
+          .select()
+          .single();
+
+        data = result.data;
+        error = result.error;
+      } else {
+        // Create new profile
+        console.log('Creating new profile for user:', user.id);
+        const result = await supabase
+          .from('patient_profiles')
+          .insert({
+            user_id: user.id,
+            name: profileData.name,
+            email: profileData.email,
+            phone: profileData.phone,
+            cpf: profileData.cpf,
+            birthdate: profileData.birthdate,
+            address: profileData.address,
+            clinic_id: profileData.clinicId,
+            notes: profileData.notes || null,
+          })
+          .select()
+          .single();
+
+        data = result.data;
+        error = result.error;
+      }
+
+      if (error) {
+        console.error('Error saving patient profile:', error);
+        throw error;
+      }
+
+      console.log('Profile saved successfully:', data);
 
       const newProfile: PatientProfile = {
         id: data.id,

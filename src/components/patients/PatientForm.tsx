@@ -26,9 +26,9 @@ import {
 import { toast } from 'sonner';
 import { ArrowLeft, Save, Camera, Upload, User as UserIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { mockClinics } from '@/models/clinic';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePatientProfile } from '@/hooks/usePatientProfile';
+import { useClinics } from '@/hooks/useClinics';
 
 const formSchema = z.object({
   name: z.string().min(3, { message: 'Nome deve ter pelo menos 3 caracteres' }),
@@ -50,7 +50,8 @@ interface PatientFormProps {
 const PatientForm: React.FC<PatientFormProps> = ({ initialData }) => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { patientProfile, hasProfile, savePatientProfile } = usePatientProfile();
+  const { patientProfile, hasProfile, savePatientProfile, loading: profileLoading } = usePatientProfile();
+  const { clinics, loading: clinicsLoading } = useClinics();
   const [avatarUrl, setAvatarUrl] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -71,6 +72,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ initialData }) => {
   // Preenche o formulário com dados existentes do perfil
   useEffect(() => {
     if (patientProfile && !initialData) {
+      console.log('Filling form with existing patient profile:', patientProfile);
       form.reset({
         name: patientProfile.name,
         email: patientProfile.email,
@@ -124,6 +126,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ initialData }) => {
     }
 
     try {
+      console.log('Submitting form with data:', data);
       await savePatientProfile({
         name: data.name,
         email: data.email,
@@ -143,6 +146,17 @@ const PatientForm: React.FC<PatientFormProps> = ({ initialData }) => {
   };
 
   const isFirstTime = !hasProfile;
+
+  if (profileLoading || clinicsLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -304,7 +318,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ initialData }) => {
                         <FormLabel>Clínica</FormLabel>
                         <Select 
                           onValueChange={field.onChange} 
-                          defaultValue={field.value}
+                          value={field.value}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -312,7 +326,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ initialData }) => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {mockClinics.map((clinic) => (
+                            {clinics.map((clinic) => (
                               <SelectItem key={clinic.id} value={clinic.id}>
                                 {clinic.name}
                               </SelectItem>
