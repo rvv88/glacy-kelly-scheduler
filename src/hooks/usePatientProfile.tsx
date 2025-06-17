@@ -12,7 +12,7 @@ interface PatientProfile {
   birthdate: string;
   address: string;
   clinicId: string;
-  clinicName?: string; // Adicionar nome da clínica
+  clinicName?: string;
   notes?: string;
   userId: string;
 }
@@ -39,37 +39,47 @@ export const usePatientProfile = () => {
     try {
       console.log('Loading patient profile for user:', user.id);
       
-      // Buscar o perfil do paciente com JOIN para obter o nome da clínica
-      const { data, error } = await supabase
+      // Buscar o perfil do paciente primeiro
+      const { data: profileData, error: profileError } = await supabase
         .from('patient_profiles')
-        .select(`
-          *,
-          clinics:clinic_id (
-            id,
-            unit_name
-          )
-        `)
+        .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error loading patient profile:', error);
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.error('Error loading patient profile:', profileError);
+        return;
       }
 
-      if (data) {
-        console.log('Patient profile found:', data);
+      if (profileData) {
+        console.log('Patient profile found:', profileData);
+        
+        // Buscar o nome da clínica separadamente
+        let clinicName = 'Clínica não encontrada';
+        if (profileData.clinic_id) {
+          const { data: clinicData, error: clinicError } = await supabase
+            .from('clinics')
+            .select('unit_name')
+            .eq('id', profileData.clinic_id)
+            .maybeSingle();
+
+          if (clinicData && !clinicError) {
+            clinicName = clinicData.unit_name;
+          }
+        }
+
         const profile: PatientProfile = {
-          id: data.id,
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          cpf: data.cpf,
-          birthdate: data.birthdate,
-          address: data.address,
-          clinicId: data.clinic_id,
-          clinicName: data.clinics?.unit_name || 'Clínica não encontrada',
-          notes: data.notes || undefined,
-          userId: data.user_id,
+          id: profileData.id,
+          name: profileData.name,
+          email: profileData.email,
+          phone: profileData.phone,
+          cpf: profileData.cpf,
+          birthdate: profileData.birthdate,
+          address: profileData.address,
+          clinicId: profileData.clinic_id,
+          clinicName: clinicName,
+          notes: profileData.notes || undefined,
+          userId: profileData.user_id,
         };
         setPatientProfile(profile);
         setHasProfile(true);
@@ -110,13 +120,7 @@ export const usePatientProfile = () => {
             notes: profileData.notes || null,
           })
           .eq('id', patientProfile.id)
-          .select(`
-            *,
-            clinics:clinic_id (
-              id,
-              unit_name
-            )
-          `)
+          .select()
           .single();
 
         data = result.data;
@@ -137,13 +141,7 @@ export const usePatientProfile = () => {
             clinic_id: profileData.clinicId,
             notes: profileData.notes || null,
           })
-          .select(`
-            *,
-            clinics:clinic_id (
-              id,
-              unit_name
-            )
-          `)
+          .select()
           .single();
 
         data = result.data;
@@ -157,6 +155,20 @@ export const usePatientProfile = () => {
 
       console.log('Profile saved successfully:', data);
 
+      // Buscar o nome da clínica para o perfil atualizado
+      let clinicName = 'Clínica não encontrada';
+      if (data.clinic_id) {
+        const { data: clinicData, error: clinicError } = await supabase
+          .from('clinics')
+          .select('unit_name')
+          .eq('id', data.clinic_id)
+          .maybeSingle();
+
+        if (clinicData && !clinicError) {
+          clinicName = clinicData.unit_name;
+        }
+      }
+
       const newProfile: PatientProfile = {
         id: data.id,
         name: data.name,
@@ -166,7 +178,7 @@ export const usePatientProfile = () => {
         birthdate: data.birthdate,
         address: data.address,
         clinicId: data.clinic_id,
-        clinicName: data.clinics?.unit_name || 'Clínica não encontrada',
+        clinicName: clinicName,
         notes: data.notes || undefined,
         userId: data.user_id,
       };
