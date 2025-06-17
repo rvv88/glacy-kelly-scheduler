@@ -2,10 +2,26 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Building, Mail, MapPin, Phone } from 'lucide-react';
-import { mockClinics, getFullAddress } from '@/models/clinic';
+import { Building, Mail, MapPin, Phone, Loader2 } from 'lucide-react';
+import { useClinics } from '@/hooks/useClinics';
+
+const getFullAddress = (clinic: any) => {
+  const parts = [
+    clinic.street,
+    clinic.number,
+    clinic.complement,
+    clinic.neighborhood,
+    clinic.city,
+    clinic.state,
+    clinic.zip_code
+  ].filter(Boolean);
+  
+  return parts.join(', ');
+};
 
 const ContactSection = () => {
+  const { clinics, loading } = useClinics();
+
   return (
     <section className="py-12 md:py-24 bg-muted/50">
       <div className="container px-4 md:px-6">
@@ -36,27 +52,40 @@ const ContactSection = () => {
               </CardContent>
             </Card>
             
-            <div className="grid gap-4">
-              {mockClinics.map((clinic) => (
-                <Card key={clinic.id}>
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      <Building className="h-5 w-5 mt-1 text-primary" />
-                      <div>
-                        <h3 className="text-lg font-bold mb-1">{clinic.name}</h3>
-                        <div className="flex items-start gap-2">
-                          <MapPin className="h-4 w-4 mt-1 text-muted-foreground" />
-                          <p className="text-sm text-muted-foreground">{getFullAddress(clinic)}</p>
+            {loading ? (
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-center h-32">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <span className="ml-2">Carregando clínicas...</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4">
+                {clinics.map((clinic) => (
+                  <Card key={clinic.id}>
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-4">
+                        <Building className="h-5 w-5 mt-1 text-primary" />
+                        <div>
+                          <h3 className="text-lg font-bold mb-1">{clinic.name}</h3>
+                          <div className="flex items-start gap-2">
+                            <MapPin className="h-4 w-4 mt-1 text-muted-foreground" />
+                            <p className="text-sm text-muted-foreground">{getFullAddress(clinic)}</p>
+                          </div>
+                          {clinic.phone && (
+                            <p className="text-sm mt-1">
+                              <span className="font-medium">Telefone:</span> {clinic.phone}
+                            </p>
+                          )}
                         </div>
-                        <p className="text-sm mt-1">
-                          <span className="font-medium">Telefone:</span> {clinic.phone}
-                        </p>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
           <div className="rounded-lg border bg-background shadow-sm">
             <div className="p-6">

@@ -244,6 +244,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_appointment_conflict: {
+        Args: {
+          appointment_date: string
+          appointment_time: string
+          appointment_duration: number
+          exclude_appointment_id?: string
+        }
+        Returns: boolean
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

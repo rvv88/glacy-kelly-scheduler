@@ -1,109 +1,66 @@
 
 import React from 'react';
-import { Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Clock, Loader2 } from 'lucide-react';
+import { useServices } from '@/hooks/useServices';
 
-const treatments = [
-  {
-    title: 'Limpeza',
-    description: 'Remoção de tártaro e placa bacteriana para manter seus dentes saudáveis.',
-  },
-  {
-    title: 'Clareamento Dental',
-    description: 'Procedimento estético para clarear os dentes.',
-  },
-  {
-    title: 'Avaliação Invisalign',
-    description: 'Consulta para avaliação de tratamento com alinhadores transparentes.',
-  },
-  {
-    title: 'Botox',
-    description: 'Aplicação de toxina botulínica para fins estéticos e terapêuticos.',
-  },
-  {
-    title: 'Preenchimento',
-    description: 'Aplicação de substâncias para restauração de volume e contornos faciais.',
-  },
-  {
-    title: 'Manutenção Invisalign',
-    description: 'Acompanhamento e ajustes do tratamento com alinhadores transparentes.',
-  },
-  {
-    title: 'Bioestimulador de colágeno',
-    description: 'Tratamento com Sculptra e Radiesse para estimular a produção natural de colágeno.',
-  },
-  {
-    title: 'Ultrassom microfocado',
-    description: 'Tecnologia para lifting facial não invasivo e rejuvenescimento da pele.',
-  },
-  {
-    title: 'Skinbooster',
-    description: 'Hidratação profunda da pele com ácido hialurônico para melhorar a elasticidade e luminosidade.',
-  },
-  {
-    title: 'Bioregeneração dérmica',
-    description: 'Tratamento para regeneração dos tecidos da pele e melhoria da qualidade cutânea.',
-  },
-  {
-    title: 'Radiofrequência',
-    description: 'Procedimento para firmeza da pele através do aquecimento controlado das camadas profundas.',
-  },
-  {
-    title: 'Jato de plasma',
-    description: 'Tecnologia avançada para rejuvenescimento e tratamento de imperfeições da pele.',
-  },
-  {
-    title: 'Lipoenzimática de papada',
-    description: 'Procedimento minimamente invasivo para redução da gordura na região do queixo e pescoço.',
-  },
-];
+const TreatmentsSection = () => {
+  const { services, loading } = useServices();
 
-const TreatmentsSection: React.FC = () => {
+  // Filtrar apenas serviços ativos
+  const activeServices = services.filter(service => service.active);
+
   return (
-    <section className="py-12 md:py-16 bg-dental-50">
+    <section className="py-12 md:py-24">
       <div className="container px-4 md:px-6">
         <div className="flex flex-col items-center justify-center space-y-4 text-center">
           <div className="space-y-2">
-            <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">
-              Serviços
-            </div>
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Tratamentos Oferecidos
+            <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">Tratamentos</div>
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+              Procedimentos Oferecidos
             </h2>
-            <p className="max-w-[900px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-              Conheça os principais serviços disponíveis em nosso consultório.
+            <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl/relaxed">
+              Oferecemos uma ampla gama de tratamentos odontológicos com tecnologia de ponta e profissionais especializados.
             </p>
           </div>
         </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mt-8">
-          {treatments.slice(0, 8).map((treatment, index) => (
-            <Card key={index} className="transition-all hover:shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                  {treatment.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {treatment.description}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        <div className="flex justify-center mt-8">
-          <Button asChild>
-            <Link to="/services">Ver Todos os Serviços</Link>
-          </Button>
-        </div>
+        
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <span className="ml-2">Carregando procedimentos...</span>
+          </div>
+        ) : (
+          <div className="mx-auto grid max-w-5xl items-center gap-6 py-12 lg:grid-cols-2 lg:gap-12">
+            {activeServices.map((service) => (
+              <Card key={service.id} className="group relative hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-xl">{service.name}</CardTitle>
+                    <Badge variant="outline" className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {service.duration} min
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-base">
+                    {service.description}
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+        
+        {!loading && activeServices.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">
+              Nenhum procedimento disponível no momento.
+            </p>
+          </div>
+        )}
       </div>
     </section>
   );

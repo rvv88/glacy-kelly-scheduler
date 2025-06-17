@@ -12,6 +12,7 @@ interface PatientProfile {
   birthdate: string;
   address: string;
   clinicId: string;
+  clinicName?: string; // Adicionar nome da clínica
   notes?: string;
   userId: string;
 }
@@ -37,9 +38,17 @@ export const usePatientProfile = () => {
 
     try {
       console.log('Loading patient profile for user:', user.id);
+      
+      // Buscar o perfil do paciente com JOIN para obter o nome da clínica
       const { data, error } = await supabase
         .from('patient_profiles')
-        .select('*')
+        .select(`
+          *,
+          clinics:clinic_id (
+            id,
+            unit_name
+          )
+        `)
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -58,6 +67,7 @@ export const usePatientProfile = () => {
           birthdate: data.birthdate,
           address: data.address,
           clinicId: data.clinic_id,
+          clinicName: data.clinics?.unit_name || 'Clínica não encontrada',
           notes: data.notes || undefined,
           userId: data.user_id,
         };
@@ -74,7 +84,7 @@ export const usePatientProfile = () => {
     }
   };
 
-  const savePatientProfile = async (profileData: Omit<PatientProfile, 'id' | 'userId'>) => {
+  const savePatientProfile = async (profileData: Omit<PatientProfile, 'id' | 'userId' | 'clinicName'>) => {
     if (!user) throw new Error('User not authenticated');
 
     try {
@@ -100,7 +110,13 @@ export const usePatientProfile = () => {
             notes: profileData.notes || null,
           })
           .eq('id', patientProfile.id)
-          .select()
+          .select(`
+            *,
+            clinics:clinic_id (
+              id,
+              unit_name
+            )
+          `)
           .single();
 
         data = result.data;
@@ -121,7 +137,13 @@ export const usePatientProfile = () => {
             clinic_id: profileData.clinicId,
             notes: profileData.notes || null,
           })
-          .select()
+          .select(`
+            *,
+            clinics:clinic_id (
+              id,
+              unit_name
+            )
+          `)
           .single();
 
         data = result.data;
@@ -144,6 +166,7 @@ export const usePatientProfile = () => {
         birthdate: data.birthdate,
         address: data.address,
         clinicId: data.clinic_id,
+        clinicName: data.clinics?.unit_name || 'Clínica não encontrada',
         notes: data.notes || undefined,
         userId: data.user_id,
       };

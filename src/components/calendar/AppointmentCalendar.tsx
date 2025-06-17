@@ -12,12 +12,14 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, Clock, Calendar as CalendarIcon, Building, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Calendar as CalendarIcon, Building, Loader2, Check, X } from 'lucide-react';
 import { format, addDays, parseISO, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import AppointmentForm from './AppointmentForm';
 import { useAppointments } from '@/hooks/useAppointments';
+import { useUserRole } from '@/hooks/useUserRole';
+import { toast } from 'sonner';
 
 const AppointmentCalendar: React.FC = () => {
   const today = new Date();
@@ -25,7 +27,8 @@ const AppointmentCalendar: React.FC = () => {
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('day');
   const [isAppointmentFormOpen, setIsAppointmentFormOpen] = useState(false);
   const [selectedTime, setSelectedTime] = useState<string | undefined>();
-  const { appointments, loading } = useAppointments();
+  const { appointments, loading, updateAppointment, deleteAppointment } = useAppointments();
+  const { userRole, isAdmin } = useUserRole();
 
   // Filtra os compromissos para o dia selecionado
   const dayAppointments = appointments.filter(app => 
@@ -43,6 +46,31 @@ const AppointmentCalendar: React.FC = () => {
   const handleNewAppointment = (time?: string) => {
     setSelectedTime(time);
     setIsAppointmentFormOpen(true);
+  };
+
+  // Função para confirmar agendamento (apenas admin)
+  const handleConfirmAppointment = async (appointmentId: string) => {
+    try {
+      await updateAppointment(appointmentId, { status: 'confirmed' });
+      toast.success('Agendamento confirmado com sucesso!');
+    } catch (error) {
+      toast.error('Erro ao confirmar agendamento');
+    }
+  };
+
+  // Função para cancelar agendamento
+  const handleCancelAppointment = async (appointmentId: string) => {
+    try {
+      if (isAdmin) {
+        await deleteAppointment(appointmentId);
+        toast.success('Agendamento removido com sucesso!');
+      } else {
+        await updateAppointment(appointmentId, { status: 'cancelled' });
+        toast.success('Agendamento cancelado com sucesso!');
+      }
+    } catch (error) {
+      toast.error('Erro ao cancelar agendamento');
+    }
   };
 
   // Função para renderizar os compromissos do dia
@@ -87,9 +115,41 @@ const AppointmentCalendar: React.FC = () => {
                     <span>{time}</span>
                   </div>
                   {appointment && (
-                    <Badge variant={appointment.status === 'confirmed' ? 'default' : 'outline'}>
-                      {appointment.status === 'confirmed' ? 'Confirmado' : appointment.status === 'pending' ? 'Pendente' : 'Cancelado'}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={appointment.status === 'confirmed' ? 'default' : appointment.status === 'pending' ? 'secondary' : 'destructive'}>
+                        {appointment.status === 'confirmed' ? 'Confirmado' : appointment.status === 'pending' ? 'Pendente' : 'Cancelado'}
+                      </Badge>
+                      {isAdmin && appointment.status === 'pending' && (
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0 text-green-600 hover:text-green-700"
+                            onClick={() => handleConfirmAppointment(appointment.id)}
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                            onClick={() => handleCancelAppointment(appointment.id)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                      {!isAdmin && appointment.status !== 'cancelled' && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                          onClick={() => handleCancelAppointment(appointment.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </CardHeader>
                 {appointment ? (
@@ -153,7 +213,10 @@ const AppointmentCalendar: React.FC = () => {
             <div>
               <CardTitle>Agenda</CardTitle>
               <CardDescription>
-                Gerenciamento de consultas e compromissos
+                {isAdmin 
+                  ? 'Gerenciamento completo de consultas e compromissos'
+                  : 'Seus agendamentos e horários disponíveis'
+                }
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -170,7 +233,9 @@ const AppointmentCalendar: React.FC = () => {
                   <SelectItem value="month">Mensal</SelectItem>
                 </SelectContent>
               </Select>
-              <Button onClick={() => handleNewAppointment()}>+ Nova Consulta</Button>
+              <Button onClick={() => handleNewAppointment()}>
+                + {userRole === 'user' ? 'Solicitar Agendamento' : 'Nova Consulta'}
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -197,9 +262,31 @@ const AppointmentCalendar: React.FC = () => {
                             <Clock className="h-4 w-4 text-muted-foreground" />
                             <span>{app.time}</span>
                           </div>
-                          <Badge variant={app.status === 'confirmed' ? 'default' : 'outline'}>
-                            {app.status === 'confirmed' ? 'Confirmado' : app.status === 'pending' ? 'Pendente' : 'Cancelado'}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={app.status === 'confirmed' ? 'default' : app.status === 'pending' ? 'secondary' : 'destructive'}>
+                              {app.status === 'confirmed' ? 'Confirmado' : app.status === 'pending' ? 'Pendente' : 'Cancelado'}
+                            </Badge>
+                            {isAdmin && app.status === 'pending' && (
+                              <div className="flex gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0 text-green-600 hover:text-green-700"
+                                  onClick={() => handleConfirmAppointment(app.id)}
+                                >
+                                  <Check className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                                  onClick={() => handleCancelAppointment(app.id)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
                         </CardHeader>
                         <CardContent className="py-2 px-4">
                           <div className="font-medium">{app.patient_name}</div>

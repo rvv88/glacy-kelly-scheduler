@@ -1,6 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 
 export interface Appointment {
   id: string;
@@ -22,13 +24,20 @@ export interface Appointment {
 export const useAppointments = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const { userRole } = useUserRole();
 
   useEffect(() => {
-    loadAppointments();
-  }, []);
+    if (user && userRole) {
+      loadAppointments();
+    }
+  }, [user, userRole]);
 
   const loadAppointments = async () => {
     try {
+      setLoading(true);
+      console.log('Loading appointments with role:', userRole);
+
       const { data, error } = await supabase
         .from('appointments')
         .select('*')
@@ -38,6 +47,8 @@ export const useAppointments = () => {
         console.error('Error loading appointments:', error);
         return;
       }
+
+      console.log('Appointments loaded:', data);
 
       // Type cast the status field to ensure it matches our interface
       const typedAppointments: Appointment[] = (data || []).map(appointment => ({
@@ -55,13 +66,37 @@ export const useAppointments = () => {
 
   const saveAppointment = async (appointmentData: Omit<Appointment, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      console.log('Saving appointment:', appointmentData);
+      
+      // Verificar conflitos de horário
+      const { data: conflictCheck, error: conflictError } = await supabase
+        .rpc('check_appointment_conflict', {
+          appointment_date: appointmentData.date,
+          appointment_time: appointmentData.time,
+          appointment_duration: appointmentData.duration
+        });
+
+      if (conflictError) {
+        console.error('Error checking conflict:', conflictError);
+        throw new Error('Erro ao verificar conflitos de horário');
+      }
+
+      if (conflictCheck) {
+        throw new Error('Já existe um agendamento neste horário');
+      }
+
       const { data, error } = await supabase
         .from('appointments')
         .insert(appointmentData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error saving appointment:', error);
+        throw error;
+      }
+
+      console.log('Appointment saved:', data);
 
       // Type cast the returned data
       const typedAppointment: Appointment = {
@@ -79,6 +114,8 @@ export const useAppointments = () => {
 
   const updateAppointment = async (id: string, appointmentData: Partial<Omit<Appointment, 'id' | 'created_at' | 'updated_at'>>) => {
     try {
+      console.log('Updating appointment:', id, appointmentData);
+
       const { data, error } = await supabase
         .from('appointments')
         .update(appointmentData)
@@ -86,7 +123,12 @@ export const useAppointments = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating appointment:', error);
+        throw error;
+      }
+
+      console.log('Appointment updated:', data);
 
       // Type cast the returned data
       const typedAppointment: Appointment = {
@@ -107,12 +149,17 @@ export const useAppointments = () => {
 
   const deleteAppointment = async (id: string) => {
     try {
+      console.log('Deleting appointment:', id);
+
       const { error } = await supabase
         .from('appointments')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting appointment:', error);
+        throw error;
+      }
 
       setAppointments(prev => prev.filter(appointment => appointment.id !== id));
     } catch (error) {

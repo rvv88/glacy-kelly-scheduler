@@ -28,13 +28,14 @@ import {
   SelectTrigger,
   SelectValue, 
 } from '@/components/ui/select';
-import { mockPatients } from '@/models/patient';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useServices } from '@/hooks/useServices';
 import { useClinics } from '@/hooks/useClinics';
 import { useAppointments } from '@/hooks/useAppointments';
+import { usePatients } from '@/hooks/usePatients';
+import { useUserRole } from '@/hooks/useUserRole';
 
 const formSchema = z.object({
   patientId: z.string().min(1, { message: 'Selecione um paciente' }),
@@ -64,6 +65,8 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
   const { services } = useServices();
   const { clinics } = useClinics();
   const { saveAppointment } = useAppointments();
+  const { patients, loading: patientsLoading } = usePatients();
+  const { userRole } = useUserRole();
   
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(formSchema),
@@ -80,8 +83,8 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
 
   const onSubmit = async (data: AppointmentFormValues) => {
     try {
-      // Get selected patient, service, and clinic names
-      const selectedPatient = mockPatients.find(p => p.id === data.patientId);
+      // Get selected patient, service, and clinic
+      const selectedPatient = patients.find(p => p.id === data.patientId);
       const selectedService = services.find(s => s.id === data.serviceId);
       const selectedClinic = clinics.find(c => c.id === data.clinicId);
 
@@ -101,17 +104,25 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
         date: data.date,
         time: data.time,
         duration: data.duration,
-        status: 'pending' as const,
+        status: userRole === 'admin' ? 'confirmed' as const : 'pending' as const,
         notes: data.notes || undefined,
       };
 
+      console.log('Creating appointment with data:', appointmentData);
+
       await saveAppointment(appointmentData);
-      toast.success('Consulta agendada com sucesso!');
+      
+      if (userRole === 'user') {
+        toast.success('Solicitação de agendamento enviada! Aguarde a confirmação do administrador.');
+      } else {
+        toast.success('Consulta agendada com sucesso!');
+      }
+      
       onClose();
       form.reset();
-    } catch (error) {
-      toast.error('Erro ao agendar consulta');
+    } catch (error: any) {
       console.error('Error submitting form:', error);
+      toast.error(error.message || 'Erro ao agendar consulta');
     }
   };
 
@@ -126,13 +137,31 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
     }
   }, [watchServiceId, services, form]);
 
+  if (patientsLoading) {
+    return (
+      <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Nova Consulta</DialogTitle>
+            <DialogDescription>
+              Carregando dados dos pacientes...
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Nova Consulta</DialogTitle>
           <DialogDescription>
-            Agende uma nova consulta para um paciente.
+            {userRole === 'user' 
+              ? 'Solicite um novo agendamento. Sua solicitação precisará ser confirmada por um administrador.'
+              : 'Agende uma nova consulta para um paciente.'
+            }
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -153,9 +182,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {mockPatients
-                        .filter(p => p.status === 'active')
-                        .map((patient) => (
+                      {patients.map((patient) => (
                         <SelectItem key={patient.id} value={patient.id}>
                           {patient.name}
                         </SelectItem>
@@ -271,7 +298,9 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
               </Button>
-              <Button type="submit">Agendar</Button>
+              <Button type="submit">
+                {userRole === 'user' ? 'Solicitar Agendamento' : 'Agendar'}
+              </Button>
             </DialogFooter>
           </form>
         </Form>
