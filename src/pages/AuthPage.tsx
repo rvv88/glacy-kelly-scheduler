@@ -20,7 +20,7 @@ const AuthPage: React.FC = () => {
           <CardTitle className="text-center">Acesso ao Sistema</CardTitle>
         </CardHeader>
         <CardContent>
-          <AuthModal isOpen={true} onClose={() => {}} hideCloseButton />
+          <AuthModal isOpen={true} onClose={() => {}} />
         </CardContent>
       </Card>
     </div>
