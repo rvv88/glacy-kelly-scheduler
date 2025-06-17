@@ -12,13 +12,26 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, Clock, Calendar as CalendarIcon, Building, Loader2, Check, X } from 'lucide-react';
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Clock, 
+  Calendar as CalendarIcon, 
+  Building, 
+  Loader2, 
+  Check, 
+  X,
+  Settings,
+  FileText,
+  Plus
+} from 'lucide-react';
 import { format, addDays, parseISO, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import AppointmentForm from './AppointmentForm';
 import { useAppointments } from '@/hooks/useAppointments';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 const AppointmentCalendar: React.FC = () => {
@@ -29,6 +42,7 @@ const AppointmentCalendar: React.FC = () => {
   const [selectedTime, setSelectedTime] = useState<string | undefined>();
   const { appointments, loading, updateAppointment, deleteAppointment } = useAppointments();
   const { userRole, isAdmin } = useUserRole();
+  const navigate = useNavigate();
 
   // Filtra os compromissos para o dia selecionado
   const dayAppointments = appointments.filter(app => 
@@ -36,7 +50,7 @@ const AppointmentCalendar: React.FC = () => {
   );
 
   // Gera horários para a visualização diária
-  const timeSlots = Array.from({ length: 10 }, (_, i) => {
+  const timeSlots = Array.from({ length: 20 }, (_, i) => {
     const hour = 8 + Math.floor(i / 2);
     const minute = (i % 2) * 30;
     return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
@@ -70,6 +84,34 @@ const AppointmentCalendar: React.FC = () => {
       }
     } catch (error) {
       toast.error('Erro ao cancelar agendamento');
+    }
+  };
+
+  // Função para obter a cor do status
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return 'bg-green-100 border-green-400 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 border-yellow-400 text-yellow-800';
+      case 'cancelled':
+        return 'bg-red-100 border-red-400 text-red-800';
+      default:
+        return 'bg-gray-100 border-gray-400 text-gray-800';
+    }
+  };
+
+  // Função para obter o texto do status
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return 'Confirmado';
+      case 'pending':
+        return 'Pendente de Aprovação';
+      case 'cancelled':
+        return 'Cancelado';
+      default:
+        return status;
     }
   };
 
@@ -107,7 +149,7 @@ const AppointmentCalendar: React.FC = () => {
             return (
               <Card key={time} className={cn(
                 "border hover:shadow transition-all",
-                appointment ? "border-dental-400 bg-dental-50" : "border-dashed"
+                appointment ? `${getStatusColor(appointment.status)} border-2` : "border-dashed"
               )}>
                 <CardHeader className="py-2 px-4 flex flex-row items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -117,7 +159,7 @@ const AppointmentCalendar: React.FC = () => {
                   {appointment && (
                     <div className="flex items-center gap-2">
                       <Badge variant={appointment.status === 'confirmed' ? 'default' : appointment.status === 'pending' ? 'secondary' : 'destructive'}>
-                        {appointment.status === 'confirmed' ? 'Confirmado' : appointment.status === 'pending' ? 'Pendente' : 'Cancelado'}
+                        {getStatusText(appointment.status)}
                       </Badge>
                       {isAdmin && appointment.status === 'pending' && (
                         <div className="flex gap-1">
@@ -189,6 +231,28 @@ const AppointmentCalendar: React.FC = () => {
 
   return (
     <div className="space-y-4">
+      {/* Botões administrativos */}
+      {isAdmin && (
+        <div className="flex gap-2 mb-4">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/admin/calendar-config')}
+            className="gap-2"
+          >
+            <Settings className="h-4 w-4" />
+            Configurar Agenda
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/admin/appointment-requests')}
+            className="gap-2"
+          >
+            <FileText className="h-4 w-4" />
+            Analisar Agenda
+          </Button>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row gap-6">
         <Card className="md:w-80 flex-shrink-0">
           <CardHeader>
@@ -204,6 +268,17 @@ const AppointmentCalendar: React.FC = () => {
               selected={selectedDate}
               onSelect={setSelectedDate}
               className="rounded-md border pointer-events-auto"
+              modifiers={{
+                hasAppointment: (date) => 
+                  appointments.some(app => isSameDay(parseISO(app.date), date))
+              }}
+              modifiersStyles={{
+                hasAppointment: { 
+                  backgroundColor: 'rgb(59 130 246 / 0.1)', 
+                  color: 'rgb(59 130 246)',
+                  fontWeight: 'bold'
+                }
+              }}
             />
           </CardContent>
         </Card>
@@ -233,8 +308,9 @@ const AppointmentCalendar: React.FC = () => {
                   <SelectItem value="month">Mensal</SelectItem>
                 </SelectContent>
               </Select>
-              <Button onClick={() => handleNewAppointment()}>
-                + {userRole === 'user' ? 'Solicitar Agendamento' : 'Nova Consulta'}
+              <Button onClick={() => handleNewAppointment()} className="gap-2">
+                <Plus className="h-4 w-4" />
+                {userRole === 'user' ? 'Solicitar Agendamento' : 'Nova Consulta'}
               </Button>
             </div>
           </CardHeader>
@@ -256,7 +332,7 @@ const AppointmentCalendar: React.FC = () => {
                     </div>
                   ) : dayAppointments.length > 0 ? (
                     dayAppointments.map(app => (
-                      <Card key={app.id} className="border-dental-400 bg-dental-50 hover:shadow transition-all">
+                      <Card key={app.id} className={cn("hover:shadow transition-all border-2", getStatusColor(app.status))}>
                         <CardHeader className="py-2 px-4 flex flex-row items-center justify-between">
                           <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4 text-muted-foreground" />
@@ -264,7 +340,7 @@ const AppointmentCalendar: React.FC = () => {
                           </div>
                           <div className="flex items-center gap-2">
                             <Badge variant={app.status === 'confirmed' ? 'default' : app.status === 'pending' ? 'secondary' : 'destructive'}>
-                              {app.status === 'confirmed' ? 'Confirmado' : app.status === 'pending' ? 'Pendente' : 'Cancelado'}
+                              {getStatusText(app.status)}
                             </Badge>
                             {isAdmin && app.status === 'pending' && (
                               <div className="flex gap-1">

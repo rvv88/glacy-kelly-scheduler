@@ -25,7 +25,7 @@ export const useAppointments = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const { userRole } = useUserRole();
+  const { userRole, isAdmin } = useUserRole();
 
   useEffect(() => {
     if (user && userRole) {
@@ -38,10 +38,33 @@ export const useAppointments = () => {
       setLoading(true);
       console.log('Loading appointments with role:', userRole);
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('appointments')
         .select('*')
-        .order('date', { ascending: true });
+        .order('date', { ascending: true })
+        .order('time', { ascending: true });
+
+      // Se for usuário comum, só carrega seus próprios agendamentos
+      if (userRole === 'user') {
+        // Primeiro buscar o patient_id do usuário
+        const { data: profileData } = await supabase
+          .from('patient_profiles')
+          .select('id')
+          .eq('user_id', user?.id)
+          .maybeSingle();
+
+        if (profileData) {
+          query = query.eq('patient_id', profileData.id);
+        } else {
+          // Se não tem perfil de paciente, não tem agendamentos
+          setAppointments([]);
+          setLoading(false);
+          return;
+        }
+      }
+      // Se for admin, carrega todos os agendamentos
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error loading appointments:', error);
@@ -85,9 +108,15 @@ export const useAppointments = () => {
         throw new Error('Já existe um agendamento neste horário');
       }
 
+      // Se for usuário comum, forçar status pending
+      const finalData = {
+        ...appointmentData,
+        status: userRole === 'user' ? 'pending' : appointmentData.status
+      };
+
       const { data, error } = await supabase
         .from('appointments')
-        .insert(appointmentData)
+        .insert(finalData)
         .select()
         .single();
 
@@ -104,7 +133,12 @@ export const useAppointments = () => {
         status: data.status as 'confirmed' | 'pending' | 'cancelled'
       };
 
-      setAppointments(prev => [...prev, typedAppointment]);
+      setAppointments(prev => [...prev, typedAppointment].sort((a, b) => {
+        const dateCompare = a.date.localeCompare(b.date);
+        if (dateCompare !== 0) return dateCompare;
+        return a.time.localeCompare(b.time);
+      }));
+      
       return typedAppointment;
     } catch (error) {
       console.error('Error saving appointment:', error);
