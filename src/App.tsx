@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,7 +15,9 @@ import ServiceFormPage from "./pages/ServiceFormPage";
 import ClinicsPage from "./pages/ClinicsPage";
 import ProfilePage from "./pages/ProfilePage";
 import AboutPage from "./pages/AboutPage";
+import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
+import RoleGuard from "./components/auth/RoleGuard";
 
 import { cn } from "@/lib/utils";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -31,17 +34,63 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Layout />}>
               <Route index element={<Index />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="calendar" element={<CalendarPage />} />
-              <Route path="patients" element={<PatientsPage />} />
-              <Route path="patients/new" element={<PatientFormPage />} />
-              <Route path="patients/edit/:id" element={<PatientFormPage />} />
-              <Route path="services" element={<ServicesPage />} />
-              <Route path="services/new" element={<ServiceFormPage />} />
-              <Route path="services/edit/:id" element={<ServiceFormPage />} />
-              <Route path="clinics" element={<ClinicsPage />} />
-              <Route path="profile" element={<ProfilePage />} />
               <Route path="about" element={<AboutPage />} />
+              <Route path="auth" element={<AuthPage />} />
+              
+              {/* Rotas que requerem login */}
+              <Route path="calendar" element={
+                <RoleGuard allowedRoles={['admin', 'user']}>
+                  <CalendarPage />
+                </RoleGuard>
+              } />
+              <Route path="patients" element={
+                <RoleGuard allowedRoles={['admin', 'user']}>
+                  <PatientsPage />
+                </RoleGuard>
+              } />
+              <Route path="patients/new" element={
+                <RoleGuard allowedRoles={['admin', 'user']}>
+                  <PatientFormPage />
+                </RoleGuard>
+              } />
+              <Route path="patients/edit/:id" element={
+                <RoleGuard allowedRoles={['admin', 'user']}>
+                  <PatientFormPage />
+                </RoleGuard>
+              } />
+              
+              {/* Rotas apenas para admin */}
+              <Route path="dashboard" element={
+                <RoleGuard allowedRoles={['admin']}>
+                  <Dashboard />
+                </RoleGuard>
+              } />
+              <Route path="services" element={
+                <RoleGuard allowedRoles={['admin']}>
+                  <ServicesPage />
+                </RoleGuard>
+              } />
+              <Route path="services/new" element={
+                <RoleGuard allowedRoles={['admin']}>
+                  <ServiceFormPage />
+                </RoleGuard>
+              } />
+              <Route path="services/edit/:id" element={
+                <RoleGuard allowedRoles={['admin']}>
+                  <ServiceFormPage />
+                </RoleGuard>
+              } />
+              <Route path="clinics" element={
+                <RoleGuard allowedRoles={['admin']}>
+                  <ClinicsPage />
+                </RoleGuard>
+              } />
+              <Route path="profile" element={
+                <RoleGuard allowedRoles={['admin']}>
+                  <ProfilePage />
+                </RoleGuard>
+              } />
+              
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
