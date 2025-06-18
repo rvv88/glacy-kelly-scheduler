@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,7 +54,7 @@ const AppointmentCalendar: React.FC = () => {
   // Função para cancelar agendamento
   const handleCancelAppointment = async (appointmentId: string) => {
     try {
-      if (isAdmin) {
+      if (isAdmin()) {
         await deleteAppointment(appointmentId);
         toast.success('Agendamento removido com sucesso!');
       } else {
@@ -98,7 +97,7 @@ const AppointmentCalendar: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Botões administrativos */}
-      {isAdmin && (
+      {isAdmin() && (
         <div className="flex gap-2 mb-4">
           <Button 
             variant="outline" 
@@ -154,7 +153,7 @@ const AppointmentCalendar: React.FC = () => {
             <div>
               <CardTitle>Agenda</CardTitle>
               <CardDescription>
-                {isAdmin 
+                {isAdmin() 
                   ? 'Gerenciamento completo de consultas e compromissos'
                   : 'Seus agendamentos e horários disponíveis'
                 }
@@ -191,7 +190,7 @@ const AppointmentCalendar: React.FC = () => {
                   selectedDate={selectedDate}
                   appointments={appointments}
                   loading={loading}
-                  isAdmin={isAdmin}
+                  isAdmin={isAdmin()}
                   onDateChange={setSelectedDate}
                   onNewAppointment={handleNewAppointment}
                   onConfirmAppointment={handleConfirmAppointment}
@@ -205,7 +204,7 @@ const AppointmentCalendar: React.FC = () => {
                   selectedDate={selectedDate}
                   appointments={appointments}
                   loading={loading}
-                  isAdmin={isAdmin}
+                  isAdmin={isAdmin()}
                   onConfirmAppointment={handleConfirmAppointment}
                   onCancelAppointment={handleCancelAppointment}
                   getStatusColor={getStatusColor}
