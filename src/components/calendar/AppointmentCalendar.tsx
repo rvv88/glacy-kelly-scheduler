@@ -11,24 +11,16 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Clock, 
   Calendar as CalendarIcon, 
-  Building, 
-  Loader2, 
-  Check, 
-  X,
   Settings,
   FileText,
   Plus
 } from 'lucide-react';
-import { format, addDays, parseISO, isSameDay } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
+import { parseISO, isSameDay } from 'date-fns';
 import AppointmentForm from './AppointmentForm';
+import AppointmentDayView from './AppointmentDayView';
+import AppointmentListView from './AppointmentListView';
 import { useAppointments } from '@/hooks/useAppointments';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useNavigate } from 'react-router-dom';
@@ -43,18 +35,6 @@ const AppointmentCalendar: React.FC = () => {
   const { appointments, loading, updateAppointment, deleteAppointment } = useAppointments();
   const { userRole, isAdmin } = useUserRole();
   const navigate = useNavigate();
-
-  // Filtra os compromissos para o dia selecionado
-  const dayAppointments = appointments.filter(app => 
-    selectedDate && isSameDay(parseISO(app.date), selectedDate)
-  );
-
-  // Gera horários para a visualização diária
-  const timeSlots = Array.from({ length: 20 }, (_, i) => {
-    const hour = 8 + Math.floor(i / 2);
-    const minute = (i % 2) * 30;
-    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-  });
 
   // Função para abrir o formulário de nova consulta
   const handleNewAppointment = (time?: string) => {
@@ -113,120 +93,6 @@ const AppointmentCalendar: React.FC = () => {
       default:
         return status;
     }
-  };
-
-  // Função para renderizar os compromissos do dia
-  const renderDayView = () => {
-    if (loading) {
-      return (
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Carregando agenda...</span>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h3 className="font-medium">
-            {selectedDate ? format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR }) : "Selecione uma data"}
-          </h3>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setSelectedDate(addDays(selectedDate || today, -1))}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setSelectedDate(addDays(selectedDate || today, 1))}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4">
-          {timeSlots.map((time) => {
-            const appointment = dayAppointments.find(app => app.time === time);
-            
-            return (
-              <Card key={time} className={cn(
-                "border hover:shadow transition-all",
-                appointment ? `${getStatusColor(appointment.status)} border-2` : "border-dashed"
-              )}>
-                <CardHeader className="py-2 px-4 flex flex-row items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span>{time}</span>
-                  </div>
-                  {appointment && (
-                    <div className="flex items-center gap-2">
-                      <Badge variant={appointment.status === 'confirmed' ? 'default' : appointment.status === 'pending' ? 'secondary' : 'destructive'}>
-                        {getStatusText(appointment.status)}
-                      </Badge>
-                      {isAdmin && appointment.status === 'pending' && (
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 w-6 p-0 text-green-600 hover:text-green-700"
-                            onClick={() => handleConfirmAppointment(appointment.id)}
-                          >
-                            <Check className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
-                            onClick={() => handleCancelAppointment(appointment.id)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
-                      {!isAdmin && appointment.status !== 'cancelled' && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
-                          onClick={() => handleCancelAppointment(appointment.id)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </CardHeader>
-                {appointment ? (
-                  <CardContent className="py-2 px-4">
-                    <div className="font-medium">{appointment.patient_name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {appointment.service_name} - {appointment.duration} min
-                    </div>
-                    <div className="text-xs flex items-center gap-1 text-muted-foreground mt-1">
-                      <Building className="h-3 w-3" />
-                      <span>{appointment.clinic_name}</span>
-                    </div>
-                    {appointment.notes && (
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Obs: {appointment.notes}
-                      </div>
-                    )}
-                  </CardContent>
-                ) : (
-                  <CardContent className="py-4 px-4 flex justify-center items-center">
-                    <Button 
-                      variant="ghost" 
-                      className="text-sm" 
-                      onClick={() => handleNewAppointment(time)}
-                    >
-                      + Agendar horário
-                    </Button>
-                  </CardContent>
-                )}
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-    );
   };
 
   return (
@@ -321,72 +187,30 @@ const AppointmentCalendar: React.FC = () => {
                 <TabsTrigger value="list">Lista</TabsTrigger>
               </TabsList>
               <TabsContent value="calendar">
-                {renderDayView()}
+                <AppointmentDayView
+                  selectedDate={selectedDate}
+                  appointments={appointments}
+                  loading={loading}
+                  isAdmin={isAdmin}
+                  onDateChange={setSelectedDate}
+                  onNewAppointment={handleNewAppointment}
+                  onConfirmAppointment={handleConfirmAppointment}
+                  onCancelAppointment={handleCancelAppointment}
+                  getStatusColor={getStatusColor}
+                  getStatusText={getStatusText}
+                />
               </TabsContent>
               <TabsContent value="list">
-                <div className="space-y-4">
-                  {loading ? (
-                    <div className="flex items-center justify-center h-32">
-                      <Loader2 className="h-6 w-6 animate-spin" />
-                      <span className="ml-2">Carregando...</span>
-                    </div>
-                  ) : dayAppointments.length > 0 ? (
-                    dayAppointments.map(app => (
-                      <Card key={app.id} className={cn("hover:shadow transition-all border-2", getStatusColor(app.status))}>
-                        <CardHeader className="py-2 px-4 flex flex-row items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                            <span>{app.time}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={app.status === 'confirmed' ? 'default' : app.status === 'pending' ? 'secondary' : 'destructive'}>
-                              {getStatusText(app.status)}
-                            </Badge>
-                            {isAdmin && app.status === 'pending' && (
-                              <div className="flex gap-1">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-6 w-6 p-0 text-green-600 hover:text-green-700"
-                                  onClick={() => handleConfirmAppointment(app.id)}
-                                >
-                                  <Check className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
-                                  onClick={() => handleCancelAppointment(app.id)}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        </CardHeader>
-                        <CardContent className="py-2 px-4">
-                          <div className="font-medium">{app.patient_name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {app.service_name} - {app.duration} min
-                          </div>
-                          <div className="text-xs flex items-center gap-1 text-muted-foreground mt-1">
-                            <Building className="h-3 w-3" />
-                            <span>{app.clinic_name}</span>
-                          </div>
-                          {app.notes && (
-                            <div className="text-xs text-muted-foreground mt-1">
-                              Obs: {app.notes}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      Não há compromissos agendados para este dia.
-                    </div>
-                  )}
-                </div>
+                <AppointmentListView
+                  selectedDate={selectedDate}
+                  appointments={appointments}
+                  loading={loading}
+                  isAdmin={isAdmin}
+                  onConfirmAppointment={handleConfirmAppointment}
+                  onCancelAppointment={handleCancelAppointment}
+                  getStatusColor={getStatusColor}
+                  getStatusText={getStatusText}
+                />
               </TabsContent>
             </Tabs>
           </CardContent>
