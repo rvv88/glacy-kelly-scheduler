@@ -60,10 +60,70 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "appointments_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "appointments_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_configurations: {
+        Row: {
+          blocked_times: string[] | null
+          clinic_id: string
+          created_at: string
+          date: string
+          end_time: string
+          id: string
+          interval_minutes: number
+          is_open: boolean
+          lunch_break_end: string | null
+          lunch_break_start: string | null
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          blocked_times?: string[] | null
+          clinic_id: string
+          created_at?: string
+          date: string
+          end_time?: string
+          id?: string
+          interval_minutes?: number
+          is_open?: boolean
+          lunch_break_end?: string | null
+          lunch_break_start?: string | null
+          start_time?: string
+          updated_at?: string
+        }
+        Update: {
+          blocked_times?: string[] | null
+          clinic_id?: string
+          created_at?: string
+          date?: string
+          end_time?: string
+          id?: string
+          interval_minutes?: number
+          is_open?: boolean
+          lunch_break_end?: string | null
+          lunch_break_start?: string | null
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_configurations_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
             referencedColumns: ["id"]
           },
         ]
@@ -252,6 +312,21 @@ export type Database = {
           exclude_appointment_id?: string
         }
         Returns: boolean
+      }
+      check_time_slot_availability: {
+        Args: {
+          p_clinic_id: string
+          p_date: string
+          p_time: string
+          p_duration?: number
+        }
+        Returns: boolean
+      }
+      get_available_time_slots: {
+        Args: { p_clinic_id: string; p_date: string }
+        Returns: {
+          time_slot: string
+        }[]
       }
       get_user_role: {
         Args: { _user_id: string }

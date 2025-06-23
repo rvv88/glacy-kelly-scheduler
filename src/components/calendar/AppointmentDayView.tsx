@@ -1,14 +1,16 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import { format, addDays, isSameDay, parseISO } from 'date-fns';
+import { format, addDays, isSameDay, parseISO, isPast, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import AppointmentTimeSlot from './AppointmentTimeSlot';
 import { Appointment } from '@/hooks/useAppointments';
+import { useCalendarConfigurations } from '@/hooks/useCalendarConfigurations';
 
 interface AppointmentDayViewProps {
   selectedDate: Date | undefined;
+  selectedClinicId: string;
   appointments: Appointment[];
   loading: boolean;
   isAdmin: boolean;
@@ -22,6 +24,7 @@ interface AppointmentDayViewProps {
 
 const AppointmentDayView: React.FC<AppointmentDayViewProps> = ({
   selectedDate,
+  selectedClinicId,
   appointments,
   loading,
   isAdmin,
@@ -33,20 +36,79 @@ const AppointmentDayView: React.FC<AppointmentDayViewProps> = ({
   getStatusText,
 }) => {
   const today = new Date();
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const { getAvailableTimeSlots } = useCalendarConfigurations();
 
-  // Filtra os compromissos para o dia selecionado
+  // Filtrar os compromissos para o dia selecionado
   const dayAppointments = appointments.filter(app => 
     selectedDate && isSameDay(parseISO(app.date), selectedDate)
   );
 
-  // Gera horários para a visualização diária
-  const timeSlots = Array.from({ length: 20 }, (_, i) => {
-    const hour = 8 + Math.floor(i / 2);
-    const minute = (i % 2) * 30;
-    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+  // Carregar horários disponíveis quando a data ou clínica mudar
+  useEffect(() => {
+    const loadAvailableSlots = async () => {
+      if (!selectedDate || !selectedClinicId) return;
+      
+      setLoadingSlots(true);
+      try {
+        const dateStr = format(selectedDate, 'yyyy-MM-dd');
+        const slots = await getAvailableTimeSlots(selectedClinicId, dateStr);
+        setAvailableSlots(slots);
+      } catch (error) {
+        console.error('Error loading available slots:', error);
+        setAvailableSlots([]);
+      } finally {
+        setLoadingSlots(false);
+      }
+    };
+
+    loadAvailableSlots();
+  }, [selectedDate, selectedClinicId, getAvailableTimeSlots]);
+
+  // Gerar horários para a visualização diária baseado na configuração
+  const timeSlots = isAdmin 
+    ? Array.from({ length: 20 }, (_, i) => {
+        const hour = 8 + Math.floor(i / 2);
+        const minute = (i % 2) * 30;
+        return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      })
+    : availableSlots;
+
+  // Filtrar horários passados para usuários não-admin
+  const filteredTimeSlots = timeSlots.filter(time => {
+    if (isAdmin) return true;
+    if (!selectedDate) return true;
+    
+    // Se não é hoje, mostrar todos os horários
+    if (!isToday(selectedDate)) return true;
+    
+    // Se é hoje, só mostrar horários futuros
+    const now = new Date();
+    const currentTime = format(now, 'HH:mm');
+    return time > currentTime;
   });
 
-  if (loading) {
+  // Verificar se um horário está disponível para agendamento
+  const isTimeSlotAvailable = (time: string): boolean => {
+    if (isAdmin) return true; // Admin vê todos os horários
+    if (!selectedDate) return false;
+    
+    // Verificar se a data já passou
+    if (isPast(selectedDate) && !isToday(selectedDate)) return false;
+    
+    // Se é hoje, verificar se o horário já passou
+    if (isToday(selectedDate)) {
+      const now = new Date();
+      const currentTime = format(now, 'HH:mm');
+      if (time <= currentTime) return false;
+    }
+    
+    // Verificar se o horário está na lista de disponíveis
+    return availableSlots.includes(time);
+  };
+
+  if (loading || loadingSlots) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -72,23 +134,34 @@ const AppointmentDayView: React.FC<AppointmentDayViewProps> = ({
       </div>
 
       <div className="grid grid-cols-1 gap-4">
-        {timeSlots.map((time) => {
-          const appointment = dayAppointments.find(app => app.time === time);
-          
-          return (
-            <AppointmentTimeSlot
-              key={time}
-              time={time}
-              appointment={appointment}
-              isAdmin={isAdmin}
-              onNewAppointment={onNewAppointment}
-              onConfirmAppointment={onConfirmAppointment}
-              onCancelAppointment={onCancelAppointment}
-              getStatusColor={getStatusColor}
-              getStatusText={getStatusText}
-            />
-          );
-        })}
+        {filteredTimeSlots.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            {isAdmin 
+              ? "Nenhum horário configurado para este dia."
+              : "Nenhum horário disponível para este dia."
+            }
+          </div>
+        ) : (
+          filteredTimeSlots.map((time) => {
+            const appointment = dayAppointments.find(app => app.time === time);
+            const isAvailable = isTimeSlotAvailable(time);
+            
+            return (
+              <AppointmentTimeSlot
+                key={time}
+                time={time}
+                appointment={appointment}
+                isAdmin={isAdmin}
+                isAvailable={isAvailable}
+                onNewAppointment={onNewAppointment}
+                onConfirmAppointment={onConfirmAppointment}
+                onCancelAppointment={onCancelAppointment}
+                getStatusColor={getStatusColor}
+                getStatusText={getStatusText}
+              />
+            );
+          })
+        )}
       </div>
     </div>
   );

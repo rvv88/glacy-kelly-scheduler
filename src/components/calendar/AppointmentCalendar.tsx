@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,18 +23,42 @@ import AppointmentDayView from './AppointmentDayView';
 import AppointmentListView from './AppointmentListView';
 import { useAppointments } from '@/hooks/useAppointments';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useClinics } from '@/hooks/useClinics';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 const AppointmentCalendar: React.FC = () => {
   const today = new Date();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(today);
+  const [selectedClinicId, setSelectedClinicId] = useState<string>('');
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('day');
   const [isAppointmentFormOpen, setIsAppointmentFormOpen] = useState(false);
   const [selectedTime, setSelectedTime] = useState<string | undefined>();
-  const { appointments, loading, updateAppointment, deleteAppointment } = useAppointments();
+  const { appointments, loading, updateAppointment, deleteAppointment, refreshAppointments } = useAppointments();
   const { userRole, isAdmin } = useUserRole();
+  const { clinics, loading: clinicsLoading } = useClinics();
   const navigate = useNavigate();
+
+  // Para admins, mostrar seletor de clínica
+  // Para usuários, usar a clínica do perfil do paciente
+  useEffect(() => {
+    if (!isAdmin() && clinics.length > 0) {
+      // Para usuários normais, tentar pegar a clínica do perfil do paciente
+      // Por enquanto, usar a primeira clínica disponível
+      setSelectedClinicId(clinics[0]?.id || '');
+    }
+  }, [clinics, isAdmin]);
+
+  useEffect(() => {
+    if (selectedClinicId) {
+      refreshAppointments();
+    }
+  }, [selectedClinicId]);
+
+  // Filtrar compromissos da clínica selecionada
+  const filteredAppointments = appointments.filter(app => 
+    !selectedClinicId || app.clinic_id === selectedClinicId
+  );
 
   // Função para abrir o formulário de nova consulta
   const handleNewAppointment = (time?: string) => {
@@ -118,109 +143,139 @@ const AppointmentCalendar: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-col md:flex-row gap-6">
-        <Card className="md:w-80 flex-shrink-0">
+      {/* Seleção de Clínica para Admins */}
+      {isAdmin() && (
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5" />
-              <span>Calendário</span>
-            </CardTitle>
-            <CardDescription>Selecione uma data</CardDescription>
+            <CardTitle>Selecionar Clínica</CardTitle>
+            <CardDescription>
+              Escolha a clínica para visualizar a agenda
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              className="rounded-md border pointer-events-auto"
-              modifiers={{
-                hasAppointment: (date) => 
-                  appointments.some(app => isSameDay(parseISO(app.date), date))
-              }}
-              modifiersStyles={{
-                hasAppointment: { 
-                  backgroundColor: 'rgb(59 130 246 / 0.1)', 
-                  color: 'rgb(59 130 246)',
-                  fontWeight: 'bold'
-                }
-              }}
-            />
+            <Select value={selectedClinicId} onValueChange={setSelectedClinicId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione uma clínica" />
+              </SelectTrigger>
+              <SelectContent>
+                {clinics.map((clinic) => (
+                  <SelectItem key={clinic.id} value={clinic.id}>
+                    {clinic.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </CardContent>
         </Card>
+      )}
 
-        <Card className="flex-1">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Agenda</CardTitle>
-              <CardDescription>
-                {isAdmin() 
-                  ? 'Gerenciamento completo de consultas e compromissos'
-                  : 'Seus agendamentos e horários disponíveis'
-                }
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Select
-                defaultValue={viewMode}
-                onValueChange={(value) => setViewMode(value as 'day' | 'week' | 'month')}
-              >
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Visualização" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="day">Diário</SelectItem>
-                  <SelectItem value="week">Semanal</SelectItem>
-                  <SelectItem value="month">Mensal</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button onClick={() => handleNewAppointment()} className="gap-2">
-                <Plus className="h-4 w-4" />
-                {userRole === 'user' ? 'Solicitar Agendamento' : 'Nova Consulta'}
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="calendar">
-              <TabsList className="mb-4">
-                <TabsTrigger value="calendar">Calendário</TabsTrigger>
-                <TabsTrigger value="list">Lista</TabsTrigger>
-              </TabsList>
-              <TabsContent value="calendar">
-                <AppointmentDayView
-                  selectedDate={selectedDate}
-                  appointments={appointments}
-                  loading={loading}
-                  isAdmin={isAdmin()}
-                  onDateChange={setSelectedDate}
-                  onNewAppointment={handleNewAppointment}
-                  onConfirmAppointment={handleConfirmAppointment}
-                  onCancelAppointment={handleCancelAppointment}
-                  getStatusColor={getStatusColor}
-                  getStatusText={getStatusText}
-                />
-              </TabsContent>
-              <TabsContent value="list">
-                <AppointmentListView
-                  selectedDate={selectedDate}
-                  appointments={appointments}
-                  loading={loading}
-                  isAdmin={isAdmin()}
-                  onConfirmAppointment={handleConfirmAppointment}
-                  onCancelAppointment={handleCancelAppointment}
-                  getStatusColor={getStatusColor}
-                  getStatusText={getStatusText}
-                />
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </div>
+      {selectedClinicId && (
+        <div className="flex flex-col md:flex-row gap-6">
+          <Card className="md:w-80 flex-shrink-0">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CalendarIcon className="h-5 w-5" />
+                <span>Calendário</span>
+              </CardTitle>
+              <CardDescription>Selecione uma data</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                className="rounded-md border pointer-events-auto"
+                modifiers={{
+                  hasAppointment: (date) => 
+                    filteredAppointments.some(app => isSameDay(parseISO(app.date), date))
+                }}
+                modifiersStyles={{
+                  hasAppointment: { 
+                    backgroundColor: 'rgb(59 130 246 / 0.1)', 
+                    color: 'rgb(59 130 246)',
+                    fontWeight: 'bold'
+                  }
+                }}
+              />
+            </CardContent>
+          </Card>
+
+          <Card className="flex-1">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Agenda</CardTitle>
+                <CardDescription>
+                  {isAdmin() 
+                    ? 'Gerenciamento completo de consultas e compromissos'
+                    : 'Seus agendamentos e horários disponíveis'
+                  }
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Select
+                  defaultValue={viewMode}
+                  onValueChange={(value) => setViewMode(value as 'day' | 'week' | 'month')}
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Visualização" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="day">Diário</SelectItem>
+                    <SelectItem value="week">Semanal</SelectItem>
+                    <SelectItem value="month">Mensal</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button onClick={() => handleNewAppointment()} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  {userRole === 'user' ? 'Solicitar Agendamento' : 'Nova Consulta'}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="calendar">
+                <TabsList className="mb-4">
+                  <TabsTrigger value="calendar">Calendário</TabsTrigger>
+                  <TabsTrigger value="list">Lista</TabsTrigger>
+                </TabsList>
+                <TabsContent value="calendar">
+                  <AppointmentDayView
+                    selectedDate={selectedDate}
+                    selectedClinicId={selectedClinicId}
+                    appointments={filteredAppointments}
+                    loading={loading}
+                    isAdmin={isAdmin()}
+                    onDateChange={setSelectedDate}
+                    onNewAppointment={handleNewAppointment}
+                    onConfirmAppointment={handleConfirmAppointment}
+                    onCancelAppointment={handleCancelAppointment}
+                    getStatusColor={getStatusColor}
+                    getStatusText={getStatusText}
+                  />
+                </TabsContent>
+                <TabsContent value="list">
+                  <AppointmentListView
+                    selectedDate={selectedDate}
+                    appointments={filteredAppointments}
+                    loading={loading}
+                    isAdmin={isAdmin()}
+                    onConfirmAppointment={handleConfirmAppointment}
+                    onCancelAppointment={handleCancelAppointment}
+                    getStatusColor={getStatusColor}
+                    getStatusText={getStatusText}
+                  />
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </div>
+      )}
       
       <AppointmentForm 
         open={isAppointmentFormOpen}
         onClose={() => setIsAppointmentFormOpen(false)}
         initialDate={selectedDate}
         initialTime={selectedTime}
+        selectedClinicId={selectedClinicId}
       />
     </div>
   );

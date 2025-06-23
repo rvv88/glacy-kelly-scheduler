@@ -11,6 +11,7 @@ interface AppointmentTimeSlotProps {
   time: string;
   appointment?: Appointment;
   isAdmin: boolean;
+  isAvailable?: boolean;
   onNewAppointment: (time: string) => void;
   onConfirmAppointment: (id: string) => void;
   onCancelAppointment: (id: string) => void;
@@ -22,37 +23,46 @@ const AppointmentTimeSlot: React.FC<AppointmentTimeSlotProps> = ({
   time,
   appointment,
   isAdmin,
+  isAvailable = true,
   onNewAppointment,
   onConfirmAppointment,
   onCancelAppointment,
   getStatusColor,
   getStatusText,
 }) => {
+  const canSchedule = isAdmin || (isAvailable && !appointment);
+  
   return (
     <Card className={cn(
       "border hover:shadow transition-all",
-      appointment ? `${getStatusColor(appointment.status)} border-2` : "border-dashed"
+      appointment ? `${getStatusColor(appointment.status)} border-2` : 
+      isAvailable ? "border-dashed border-green-200" : "border-dashed border-gray-200 opacity-50"
     )}>
       <CardHeader className="py-2 px-4 flex flex-row items-center justify-between">
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-muted-foreground" />
           <span>{time}</span>
+          {!isAvailable && !appointment && !isAdmin && (
+            <Badge variant="secondary" className="text-xs">Indisponível</Badge>
+          )}
         </div>
         {appointment && (
           <div className="flex items-center gap-2">
             <Badge variant={appointment.status === 'confirmed' ? 'default' : appointment.status === 'pending' ? 'secondary' : 'destructive'}>
               {getStatusText(appointment.status)}
             </Badge>
-            {isAdmin && appointment.status === 'pending' && (
+            {isAdmin && (
               <div className="flex gap-1">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-6 w-6 p-0 text-green-600 hover:text-green-700"
-                  onClick={() => onConfirmAppointment(appointment.id)}
-                >
-                  <Check className="h-4 w-4" />
-                </Button>
+                {appointment.status === 'pending' && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 w-6 p-0 text-green-600 hover:text-green-700"
+                    onClick={() => onConfirmAppointment(appointment.id)}
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="ghost"
@@ -94,13 +104,19 @@ const AppointmentTimeSlot: React.FC<AppointmentTimeSlotProps> = ({
         </CardContent>
       ) : (
         <CardContent className="py-4 px-4 flex justify-center items-center">
-          <Button 
-            variant="ghost" 
-            className="text-sm" 
-            onClick={() => onNewAppointment(time)}
-          >
-            + Agendar horário
-          </Button>
+          {canSchedule ? (
+            <Button 
+              variant="ghost" 
+              className="text-sm" 
+              onClick={() => onNewAppointment(time)}
+            >
+              + Agendar horário
+            </Button>
+          ) : (
+            <span className="text-sm text-muted-foreground">
+              {!isAvailable ? 'Horário não disponível' : 'Horário ocupado'}
+            </span>
+          )}
         </CardContent>
       )}
     </Card>
