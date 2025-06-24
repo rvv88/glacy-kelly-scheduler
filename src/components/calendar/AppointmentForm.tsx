@@ -54,6 +54,7 @@ interface AppointmentFormProps {
   onClose: () => void;
   initialDate?: Date;
   initialTime?: string;
+  selectedClinicId?: string;
 }
 
 const AppointmentForm: React.FC<AppointmentFormProps> = ({
@@ -61,6 +62,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
   onClose,
   initialDate,
   initialTime,
+  selectedClinicId,
 }) => {
   const { services } = useServices();
   const { clinics } = useClinics();
@@ -73,7 +75,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
     defaultValues: {
       patientId: '',
       serviceId: '',
-      clinicId: '',
+      clinicId: selectedClinicId || '',
       date: initialDate ? format(initialDate, 'yyyy-MM-dd') : '',
       time: initialTime || '',
       duration: 30,
@@ -136,6 +138,13 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
       }
     }
   }, [watchServiceId, services, form]);
+
+  // Atualiza clinicId quando selectedClinicId muda
+  React.useEffect(() => {
+    if (selectedClinicId) {
+      form.setValue('clinicId', selectedClinicId);
+    }
+  }, [selectedClinicId, form]);
 
   if (patientsLoading) {
     return (
@@ -230,7 +239,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                   <FormLabel>Clínica</FormLabel>
                   <Select 
                     onValueChange={field.onChange} 
-                    defaultValue={field.value}
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>

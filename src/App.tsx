@@ -70,7 +70,7 @@ const App = () => (
                   
                   {/* Rotas administrativas */}
                   <Route path="/admin/clinics" element={
-                    <RoleGuard requiredRole="admin">
+                    <RoleGuard allowedRoles={['admin']}>
                       <Layout>
                         <ClinicsPage />
                       </Layout>
@@ -78,7 +78,7 @@ const App = () => (
                   } />
                   
                   <Route path="/admin/services" element={
-                    <RoleGuard requiredRole="admin">
+                    <RoleGuard allowedRoles={['admin']}>
                       <Layout>
                         <ServicesPage />
                       </Layout>
@@ -86,7 +86,7 @@ const App = () => (
                   } />
                   
                   <Route path="/admin/services/new" element={
-                    <RoleGuard requiredRole="admin">
+                    <RoleGuard allowedRoles={['admin']}>
                       <Layout>
                         <ServiceFormPage />
                       </Layout>
@@ -94,7 +94,7 @@ const App = () => (
                   } />
                   
                   <Route path="/admin/services/edit/:id" element={
-                    <RoleGuard requiredRole="admin">
+                    <RoleGuard allowedRoles={['admin']}>
                       <Layout>
                         <ServiceFormPage />
                       </Layout>
@@ -102,7 +102,7 @@ const App = () => (
                   } />
                   
                   <Route path="/admin/patients" element={
-                    <RoleGuard requiredRole="admin">
+                    <RoleGuard allowedRoles={['admin']}>
                       <Layout>
                         <PatientsPage />
                       </Layout>
@@ -110,7 +110,7 @@ const App = () => (
                   } />
                   
                   <Route path="/admin/patients/new" element={
-                    <RoleGuard requiredRole="admin">
+                    <RoleGuard allowedRoles={['admin']}>
                       <Layout>
                         <PatientFormPage />
                       </Layout>
@@ -118,7 +118,7 @@ const App = () => (
                   } />
                   
                   <Route path="/admin/patients/edit/:id" element={
-                    <RoleGuard requiredRole="admin">
+                    <RoleGuard allowedRoles={['admin']}>
                       <Layout>
                         <PatientFormPage />
                       </Layout>
@@ -126,7 +126,7 @@ const App = () => (
                   } />
                   
                   <Route path="/admin/calendar-config" element={
-                    <RoleGuard requiredRole="admin">
+                    <RoleGuard allowedRoles={['admin']}>
                       <Layout>
                         <AdminCalendarConfigPage />
                       </Layout>
@@ -134,7 +134,7 @@ const App = () => (
                   } />
                   
                   <Route path="/admin/appointment-requests" element={
-                    <RoleGuard requiredRole="admin">
+                    <RoleGuard allowedRoles={['admin']}>
                       <Layout>
                         <AdminAppointmentRequestsPage />
                       </Layout>
@@ -142,7 +142,7 @@ const App = () => (
                   } />
                   
                   <Route path="/admin/users" element={
-                    <RoleGuard requiredRole="admin">
+                    <RoleGuard allowedRoles={['admin']}>
                       <Layout>
                         <UsersPage />
                       </Layout>
