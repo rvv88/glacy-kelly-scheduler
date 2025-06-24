@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -7,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus } from 'lucide-react';
 import AppointmentDayView from './AppointmentDayView';
 import AppointmentListView from './AppointmentListView';
-import { Appointment } from '@/hooks/useAppointments';
+import { Appointment } from '@/types/appointment';
 
 interface AppointmentCalendarContentProps {
   selectedDate: Date | undefined;

@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { parseISO, isSameDay } from 'date-fns';
-import { Appointment } from '@/hooks/useAppointments';
+import { Appointment } from '@/types/appointment';
 
 interface CalendarSidebarProps {
   selectedDate: Date | undefined;

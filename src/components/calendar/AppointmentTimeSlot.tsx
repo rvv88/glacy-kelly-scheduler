@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Building, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Appointment } from '@/hooks/useAppointments';
+import { Appointment } from '@/types/appointment';
 
 interface AppointmentTimeSlotProps {
   time: string;

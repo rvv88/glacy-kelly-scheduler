@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Clock, Building, Check, X, Loader2 } from 'lucide-react';
 import { isSameDay, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Appointment } from '@/hooks/useAppointments';
+import { Appointment } from '@/types/appointment';
 
 interface AppointmentListViewProps {
   selectedDate: Date | undefined;

@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { format, addDays, isSameDay, parseISO, isPast, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import AppointmentTimeSlot from './AppointmentTimeSlot';
-import { Appointment } from '@/hooks/useAppointments';
+import { Appointment } from '@/types/appointment';
 import { useCalendarConfigurations } from '@/hooks/useCalendarConfigurations';
 
 interface AppointmentDayViewProps {
