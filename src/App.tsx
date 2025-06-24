@@ -45,11 +45,20 @@ const App = () => (
             <ProfileChecker>
               <Suspense fallback={<LoadingSpinner />}>
                 <Routes>
-                  <Route path="/" element={<Index />} />
+                  {/* Páginas públicas sem Layout */}
+                  <Route path="/" element={
+                    <Layout>
+                      <Index />
+                    </Layout>
+                  } />
                   <Route path="/auth" element={<AuthPage />} />
-                  <Route path="/about" element={<AboutPage />} />
+                  <Route path="/about" element={
+                    <Layout>
+                      <AboutPage />
+                    </Layout>
+                  } />
                   
-                  {/* Rotas protegidas */}
+                  {/* Rotas protegidas com Layout */}
                   <Route path="/dashboard" element={
                     <Layout>
                       <Dashboard />
@@ -62,6 +71,12 @@ const App = () => (
                     </Layout>
                   } />
                   
+                  <Route path="/patients" element={
+                    <Layout>
+                      <ProfilePage />
+                    </Layout>
+                  } />
+                  
                   <Route path="/profile" element={
                     <Layout>
                       <ProfilePage />
@@ -69,7 +84,7 @@ const App = () => (
                   } />
                   
                   {/* Rotas administrativas */}
-                  <Route path="/admin/clinics" element={
+                  <Route path="/clinics" element={
                     <RoleGuard allowedRoles={['admin']}>
                       <Layout>
                         <ClinicsPage />
@@ -77,7 +92,7 @@ const App = () => (
                     </RoleGuard>
                   } />
                   
-                  <Route path="/admin/services" element={
+                  <Route path="/services" element={
                     <RoleGuard allowedRoles={['admin']}>
                       <Layout>
                         <ServicesPage />
@@ -85,7 +100,7 @@ const App = () => (
                     </RoleGuard>
                   } />
                   
-                  <Route path="/admin/services/new" element={
+                  <Route path="/services/new" element={
                     <RoleGuard allowedRoles={['admin']}>
                       <Layout>
                         <ServiceFormPage />
@@ -93,7 +108,7 @@ const App = () => (
                     </RoleGuard>
                   } />
                   
-                  <Route path="/admin/services/edit/:id" element={
+                  <Route path="/services/edit/:id" element={
                     <RoleGuard allowedRoles={['admin']}>
                       <Layout>
                         <ServiceFormPage />
@@ -147,6 +162,20 @@ const App = () => (
                         <UsersPage />
                       </Layout>
                     </RoleGuard>
+                  } />
+                  
+                  <Route path="/settings" element={
+                    <RoleGuard allowedRoles={['admin']}>
+                      <Layout>
+                        <div>Configurações</div>
+                      </Layout>
+                    </RoleGuard>
+                  } />
+                  
+                  <Route path="/history" element={
+                    <Layout>
+                      <div>Histórico</div>
+                    </Layout>
                   } />
                   
                   <Route path="*" element={<NotFound />} />

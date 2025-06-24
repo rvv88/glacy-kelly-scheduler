@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
-import AuthRedirect from '../auth/AuthRedirect';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -21,9 +20,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <div className="flex flex-1">
         <Sidebar isOpen={isSidebarOpen} />
         <main className="flex-1 md:ml-64 pt-16 px-4 md:px-8 pb-12">
-          <AuthRedirect>
-            {children}
-          </AuthRedirect>
+          {children}
         </main>
       </div>
     </div>
