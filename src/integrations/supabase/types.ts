@@ -85,8 +85,6 @@ export type Database = {
           id: string
           interval_minutes: number
           is_open: boolean
-          lunch_break_end: string | null
-          lunch_break_start: string | null
           start_time: string
           updated_at: string
         }
@@ -99,8 +97,6 @@ export type Database = {
           id?: string
           interval_minutes?: number
           is_open?: boolean
-          lunch_break_end?: string | null
-          lunch_break_start?: string | null
           start_time?: string
           updated_at?: string
         }
@@ -113,8 +109,6 @@ export type Database = {
           id?: string
           interval_minutes?: number
           is_open?: boolean
-          lunch_break_end?: string | null
-          lunch_break_start?: string | null
           start_time?: string
           updated_at?: string
         }
@@ -350,8 +344,6 @@ export type Database = {
           end_time: string
           interval_minutes: number
           blocked_times: string[]
-          lunch_break_start: string
-          lunch_break_end: string
           created_at: string
           updated_at: string
         }[]
@@ -376,8 +368,6 @@ export type Database = {
           p_end_time: string
           p_interval_minutes: number
           p_blocked_times: string[]
-          p_lunch_break_start?: string
-          p_lunch_break_end?: string
         }
         Returns: {
           blocked_times: string[] | null
@@ -388,8 +378,6 @@ export type Database = {
           id: string
           interval_minutes: number
           is_open: boolean
-          lunch_break_end: string | null
-          lunch_break_start: string | null
           start_time: string
           updated_at: string
         }

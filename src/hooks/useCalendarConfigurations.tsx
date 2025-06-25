@@ -11,8 +11,6 @@ export interface CalendarConfiguration {
   start_time: string;
   end_time: string;
   interval_minutes: number;
-  lunch_break_start?: string;
-  lunch_break_end?: string;
   blocked_times: string[];
   created_at?: string;
   updated_at?: string;
@@ -63,9 +61,7 @@ export const useCalendarConfigurations = () => {
           p_start_time: config.start_time ?? '08:00',
           p_end_time: config.end_time ?? '18:00',
           p_interval_minutes: config.interval_minutes ?? 30,
-          p_blocked_times: config.blocked_times ?? [],
-          p_lunch_break_start: config.lunch_break_start || null,
-          p_lunch_break_end: config.lunch_break_end || null
+          p_blocked_times: config.blocked_times ?? []
         });
 
       if (error) {
