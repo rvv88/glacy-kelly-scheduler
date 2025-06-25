@@ -305,12 +305,19 @@ export type Database = {
     }
     Functions: {
       check_appointment_conflict: {
-        Args: {
-          appointment_date: string
-          appointment_time: string
-          appointment_duration: number
-          exclude_appointment_id?: string
-        }
+        Args:
+          | {
+              appointment_date: string
+              appointment_time: string
+              appointment_duration: number
+              exclude_appointment_id?: string
+            }
+          | {
+              appointment_date: string
+              appointment_time: string
+              appointment_duration: number
+              exclude_appointment_id?: string
+            }
         Returns: boolean
       }
       check_time_slot_availability: {

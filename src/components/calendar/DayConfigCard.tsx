@@ -1,13 +1,12 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { CalendarConfiguration } from '@/hooks/useCalendarConfigurations';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarConfiguration } from '@/hooks/useCalendarConfigurations';
 import TimeSlotGrid from './TimeSlotGrid';
 
 interface DayConfigCardProps {
@@ -25,26 +24,39 @@ const DayConfigCard: React.FC<DayConfigCardProps> = ({
   timeSlots,
   onToggleBlockedTime,
 }) => {
+  if (!selectedDate) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Configuração do Dia</CardTitle>
+          <CardDescription>
+            Selecione uma data no calendário para configurar
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>
-          {selectedDate ? format(selectedDate, "dd 'de' MMMM", { locale: ptBR }) : 'Selecione uma data'}
+          Configuração - {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
         </CardTitle>
         <CardDescription>
-          Configure os horários para este dia
+          Configure os horários de funcionamento para este dia
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Status do dia */}
+        {/* Status de funcionamento */}
         <div className="flex items-center space-x-2">
           <Switch
-            id="day-open"
+            id="is-open"
             checked={config.is_open}
-            onCheckedChange={(is_open) => onUpdateConfig({ is_open })}
+            onCheckedChange={(checked) => onUpdateConfig({ is_open: checked })}
           />
-          <Label htmlFor="day-open">
-            Agenda aberta neste dia
+          <Label htmlFor="is-open">
+            {config.is_open ? 'Funcionando' : 'Fechado'}
           </Label>
         </div>
 
@@ -53,7 +65,7 @@ const DayConfigCard: React.FC<DayConfigCardProps> = ({
             {/* Horários de funcionamento */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="start-time">Horário de Abertura</Label>
+                <Label htmlFor="start-time">Horário de Início</Label>
                 <Input
                   id="start-time"
                   type="time"
@@ -62,7 +74,7 @@ const DayConfigCard: React.FC<DayConfigCardProps> = ({
                 />
               </div>
               <div>
-                <Label htmlFor="end-time">Horário de Fechamento</Label>
+                <Label htmlFor="end-time">Horário de Fim</Label>
                 <Input
                   id="end-time"
                   type="time"
@@ -74,51 +86,48 @@ const DayConfigCard: React.FC<DayConfigCardProps> = ({
 
             {/* Intervalo entre consultas */}
             <div>
-              <Label htmlFor="interval">Intervalo entre consultas</Label>
-              <Select
-                value={config.interval_minutes.toString()}
-                onValueChange={(value) => onUpdateConfig({ interval_minutes: parseInt(value) })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="15">15 minutos</SelectItem>
-                  <SelectItem value="30">30 minutos</SelectItem>
-                  <SelectItem value="60">1 hora</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="interval">Intervalo entre consultas (minutos)</Label>
+              <Input
+                id="interval"
+                type="number"
+                min="15"
+                max="120"
+                step="15"
+                value={config.interval_minutes}
+                onChange={(e) => onUpdateConfig({ interval_minutes: parseInt(e.target.value) })}
+              />
             </div>
 
             {/* Horário de almoço */}
-            <div className="space-y-2">
-              <Label>Horário de Almoço (opcional)</Label>
-              <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="lunch-start">Início do Almoço</Label>
                 <Input
+                  id="lunch-start"
                   type="time"
-                  placeholder="Início"
                   value={config.lunch_break_start || ''}
-                  onChange={(e) => onUpdateConfig({
-                    lunch_break_start: e.target.value || undefined
-                  })}
+                  onChange={(e) => onUpdateConfig({ lunch_break_start: e.target.value || undefined })}
                 />
+              </div>
+              <div>
+                <Label htmlFor="lunch-end">Fim do Almoço</Label>
                 <Input
+                  id="lunch-end"
                   type="time"
-                  placeholder="Fim"
                   value={config.lunch_break_end || ''}
-                  onChange={(e) => onUpdateConfig({
-                    lunch_break_end: e.target.value || undefined
-                  })}
+                  onChange={(e) => onUpdateConfig({ lunch_break_end: e.target.value || undefined })}
                 />
               </div>
             </div>
 
-            {/* Horários disponíveis */}
-            <TimeSlotGrid
-              timeSlots={timeSlots}
-              config={config}
-              onToggleBlockedTime={onToggleBlockedTime}
-            />
+            {/* Grid de horários disponíveis */}
+            {timeSlots.length > 0 && (
+              <TimeSlotGrid
+                timeSlots={timeSlots}
+                config={config}
+                onToggleBlockedTime={onToggleBlockedTime}
+              />
+            )}
           </>
         )}
       </CardContent>

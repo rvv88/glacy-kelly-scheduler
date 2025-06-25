@@ -117,11 +117,31 @@ export const useCalendarConfigurations = () => {
 
       if (error) {
         console.error('Error getting available time slots:', error);
+        console.error('Error details:', error);
         return [];
       }
 
-      console.log('Available time slots:', data);
-      return data?.map((slot: any) => slot.time_slot) || [];
+      console.log('Raw data from RPC:', data);
+      
+      // Verificar se data existe e é um array
+      if (!data || !Array.isArray(data)) {
+        console.log('No data returned or data is not an array');
+        return [];
+      }
+
+      // Mapear os resultados e formatear os horários
+      const timeSlots = data.map((slot: any) => {
+        console.log('Processing slot:', slot);
+        if (slot && slot.time_slot) {
+          // Formatar o horário se necessário (remover segundos se presentes)
+          const timeString = slot.time_slot.toString();
+          return timeString.substring(0, 5); // Manter apenas HH:MM
+        }
+        return null;
+      }).filter(Boolean);
+
+      console.log('Processed time slots:', timeSlots);
+      return timeSlots;
     } catch (error) {
       console.error('Error getting available time slots:', error);
       return [];
