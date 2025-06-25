@@ -58,20 +58,25 @@ export const notificationService = {
   },
 
   async sendEmailNotification(data: CreateNotificationData & { userEmail: string; clinicAddress: string }) {
-    // Para desenvolvimento, apenas logar os dados do email
-    // Em produção, você integraria com um serviço de email como SendGrid, AWS SES, etc.
-    const emailData = {
-      to: data.userEmail,
-      subject: `Agendamento ${data.type === 'confirmed' ? 'Confirmado' : 'Recusado'} - Dra. Glacy Kelly Bisaggio`,
-      body: this.generateEmailTemplate(data)
-    };
+    try {
+      // Para desenvolvimento, apenas logar os dados do email
+      // Em produção, você integraria com um serviço de email como SendGrid, AWS SES, etc.
+      const emailData = {
+        to: data.userEmail,
+        subject: `Agendamento ${data.type === 'confirmed' ? 'Confirmado' : 'Recusado'} - Dra. Glacy Kelly Bisaggio`,
+        body: this.generateEmailTemplate(data)
+      };
 
-    console.log('Email notification data:', emailData);
-    
-    // Aqui você implementaria o envio real do email
-    // Exemplo: await emailProvider.send(emailData);
-    
-    return true;
+      console.log('Email notification data:', emailData);
+      
+      // Aqui você implementaria o envio real do email
+      // Exemplo: await emailProvider.send(emailData);
+      
+      return true;
+    } catch (error) {
+      console.error('Error sending email notification:', error);
+      throw error;
+    }
   },
 
   generateEmailTemplate(data: CreateNotificationData & { userEmail: string; clinicAddress: string }) {
