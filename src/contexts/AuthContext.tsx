@@ -58,8 +58,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (event === 'SIGNED_IN') {
             setTimeout(() => {
               checkPatientProfile();
-              // Redirecionar para Meus Dados após login bem-sucedido
-              window.location.href = '/patients';
             }, 0);
           }
         } else {
