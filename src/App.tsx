@@ -73,7 +73,7 @@ const App = () => (
                   
                   <Route path="/patients" element={
                     <Layout>
-                      <ProfilePage />
+                      <PatientsPage />
                     </Layout>
                   } />
                   

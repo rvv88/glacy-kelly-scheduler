@@ -46,34 +46,59 @@ export const appointmentService = {
     }));
   },
 
-  async checkAppointmentConflict(date: string, time: string, duration: number): Promise<boolean> {
-    const { data: conflictCheck, error: conflictError } = await supabase
-      .rpc('check_appointment_conflict', {
-        appointment_date: date,
-        appointment_time: time,
-        appointment_duration: duration
-      });
+  async checkAppointmentConflict(date: string, time: string, duration: number, clinicId: string): Promise<boolean> {
+    // Verificar conflitos apenas na mesma clínica
+    const { data: conflictingAppointments, error } = await supabase
+      .from('appointments')
+      .select('*')
+      .eq('date', date)
+      .eq('clinic_id', clinicId)
+      .in('status', ['confirmed', 'pending']);
 
-    if (conflictError) {
-      console.error('Error checking conflict:', conflictError);
+    if (error) {
+      console.error('Error checking conflict:', error);
       throw new Error('Erro ao verificar conflitos de horário');
     }
 
-    return conflictCheck;
+    // Verificar se há sobreposição de horários na mesma clínica
+    const startTime = new Date(`1970-01-01T${time}:00`);
+    const endTime = new Date(startTime.getTime() + duration * 60000);
+
+    const hasConflict = conflictingAppointments.some(appointment => {
+      const appointmentStart = new Date(`1970-01-01T${appointment.time}:00`);
+      const appointmentEnd = new Date(appointmentStart.getTime() + appointment.duration * 60000);
+      
+      return (
+        (startTime >= appointmentStart && startTime < appointmentEnd) ||
+        (endTime > appointmentStart && endTime <= appointmentEnd) ||
+        (startTime <= appointmentStart && endTime >= appointmentEnd)
+      );
+    });
+
+    return hasConflict;
   },
 
   async createAppointment(appointmentData: CreateAppointmentData, userRole: string): Promise<Appointment> {
     console.log('Saving appointment:', appointmentData);
     
-    // Verificar conflitos de horário
+    // Verificar se é um horário no passado
+    const appointmentDateTime = new Date(`${appointmentData.date}T${appointmentData.time}`);
+    const now = new Date();
+    
+    if (appointmentDateTime < now) {
+      throw new Error('Não é possível agendar para datas/horários que já passaram');
+    }
+    
+    // Verificar conflitos de horário apenas na mesma clínica
     const hasConflict = await this.checkAppointmentConflict(
       appointmentData.date,
       appointmentData.time,
-      appointmentData.duration
+      appointmentData.duration,
+      appointmentData.clinic_id
     );
 
     if (hasConflict) {
-      throw new Error('Já existe um agendamento neste horário');
+      throw new Error('Já existe um agendamento neste horário para esta clínica');
     }
 
     // Se for usuário comum, forçar status pending
@@ -104,6 +129,16 @@ export const appointmentService = {
 
   async updateAppointment(id: string, appointmentData: UpdateAppointmentData): Promise<Appointment> {
     console.log('Updating appointment:', id, appointmentData);
+
+    // Se está alterando data/hora, verificar se não é no passado
+    if (appointmentData.date && appointmentData.time) {
+      const appointmentDateTime = new Date(`${appointmentData.date}T${appointmentData.time}`);
+      const now = new Date();
+      
+      if (appointmentDateTime < now) {
+        throw new Error('Não é possível agendar para datas/horários que já passaram');
+      }
+    }
 
     const { data, error } = await supabase
       .from('appointments')

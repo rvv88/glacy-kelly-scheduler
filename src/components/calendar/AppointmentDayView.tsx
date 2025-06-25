@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import { format, addDays, isSameDay, parseISO, isPast, isToday } from 'date-fns';
+import { format, addDays, isSameDay, parseISO, isPast, isToday, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import AppointmentTimeSlot from './AppointmentTimeSlot';
 import { Appointment } from '@/types/appointment';
@@ -39,9 +40,11 @@ const AppointmentDayView: React.FC<AppointmentDayViewProps> = ({
   const [loadingSlots, setLoadingSlots] = useState(false);
   const { getAvailableTimeSlots } = useCalendarConfigurations();
 
-  // Filtrar os compromissos para o dia selecionado
+  // Filtrar os compromissos para o dia selecionado e clínica específica
   const dayAppointments = appointments.filter(app => 
-    selectedDate && isSameDay(parseISO(app.date), selectedDate)
+    selectedDate && 
+    isSameDay(parseISO(app.date), selectedDate) &&
+    app.clinic_id === selectedClinicId
   );
 
   // Carregar horários disponíveis quando a data ou clínica mudar
@@ -74,36 +77,27 @@ const AppointmentDayView: React.FC<AppointmentDayViewProps> = ({
       })
     : availableSlots;
 
-  // Filtrar horários passados para usuários não-admin
-  const filteredTimeSlots = timeSlots.filter(time => {
-    if (isAdmin) return true;
-    if (!selectedDate) return true;
-    
-    // Se não é hoje, mostrar todos os horários
-    if (!isToday(selectedDate)) return true;
-    
-    // Se é hoje, só mostrar horários futuros
-    const now = new Date();
-    const currentTime = format(now, 'HH:mm');
-    return time > currentTime;
-  });
-
   // Verificar se um horário está disponível para agendamento
   const isTimeSlotAvailable = (time: string): boolean => {
-    if (isAdmin) return true; // Admin vê todos os horários
     if (!selectedDate) return false;
     
-    // Verificar se a data já passou
-    if (isPast(selectedDate) && !isToday(selectedDate)) return false;
+    // Verificar se é uma data no passado
+    if (isBefore(selectedDate, today) && !isToday(selectedDate)) return false;
     
     // Se é hoje, verificar se o horário já passou
     if (isToday(selectedDate)) {
       const now = new Date();
-      const currentTime = format(now, 'HH:mm');
-      if (time <= currentTime) return false;
+      const [hours, minutes] = time.split(':').map(Number);
+      const slotTime = new Date();
+      slotTime.setHours(hours, minutes, 0, 0);
+      
+      if (isBefore(slotTime, now)) return false;
     }
     
-    // Verificar se o horário está na lista de disponíveis
+    // Para admin, mostrar todos os horários (mesmo passados) para visualização
+    if (isAdmin) return true;
+    
+    // Para usuários, verificar se o horário está na lista de disponíveis
     return availableSlots.includes(time);
   };
 
@@ -133,7 +127,7 @@ const AppointmentDayView: React.FC<AppointmentDayViewProps> = ({
       </div>
 
       <div className="grid grid-cols-1 gap-4">
-        {filteredTimeSlots.length === 0 ? (
+        {timeSlots.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             {isAdmin 
               ? "Nenhum horário configurado para este dia."
@@ -141,7 +135,7 @@ const AppointmentDayView: React.FC<AppointmentDayViewProps> = ({
             }
           </div>
         ) : (
-          filteredTimeSlots.map((time) => {
+          timeSlots.map((time) => {
             const appointment = dayAppointments.find(app => app.time === time);
             const isAvailable = isTimeSlotAvailable(time);
             

@@ -41,7 +41,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     }
 
     if (userRole === 'admin') {
-      // Admin - todos os links
+      // Admin - todos os links incluindo Usuários
       return [
         { name: 'Home', href: '/', icon: Home },
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -49,6 +49,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
         { name: 'Meus Dados', href: '/patients', icon: Users },
         { name: 'Serviços', href: '/services', icon: FileText },
         { name: 'Clínicas', href: '/clinics', icon: Building },
+        { name: 'Usuários', href: '/admin/users', icon: Users },
         { name: 'Histórico', href: '/history', icon: FileClock },
         { name: 'Sobre', href: '/about', icon: Home },
         { name: 'Configurações', href: '/settings', icon: Settings },

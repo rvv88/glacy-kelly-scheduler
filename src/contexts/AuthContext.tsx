@@ -58,6 +58,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (event === 'SIGNED_IN') {
             setTimeout(() => {
               checkPatientProfile();
+              // Redirecionar para Meus Dados após login bem-sucedido
+              window.location.href = '/patients';
             }, 0);
           }
         } else {
@@ -127,7 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         data: {
           full_name: fullName,
         },
-        emailRedirectTo: `${window.location.origin}/patients/new`
+        emailRedirectTo: `${window.location.origin}/patients`
       },
     });
     if (error) throw error;
@@ -137,7 +139,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/patients/new`
+        redirectTo: `${window.location.origin}/patients`
       }
     });
     if (error) throw error;
