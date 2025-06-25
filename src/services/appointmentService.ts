@@ -6,31 +6,13 @@ export const appointmentService = {
   async loadAppointments(userRole: string, userId?: string): Promise<Appointment[]> {
     console.log('Loading appointments with role:', userRole);
 
-    let query = supabase
+    // Com as políticas RLS, não precisamos filtrar manualmente
+    // O banco já vai retornar apenas os dados que o usuário pode ver
+    const { data, error } = await supabase
       .from('appointments')
       .select('*')
       .order('date', { ascending: true })
       .order('time', { ascending: true });
-
-    // Se for usuário comum, só carrega seus próprios agendamentos
-    if (userRole === 'user' && userId) {
-      // Primeiro buscar o patient_id do usuário
-      const { data: profileData } = await supabase
-        .from('patient_profiles')
-        .select('id')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (profileData) {
-        query = query.eq('patient_id', profileData.id);
-      } else {
-        // Se não tem perfil de paciente, não tem agendamentos
-        return [];
-      }
-    }
-    // Se for admin, carrega todos os agendamentos
-
-    const { data, error } = await query;
 
     if (error) {
       console.error('Error loading appointments:', error);

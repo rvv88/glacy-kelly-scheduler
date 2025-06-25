@@ -29,7 +29,7 @@ const UsersManagement: React.FC = () => {
       setLoading(true);
       console.log('Loading all users...');
 
-      // Get all profiles - sem filtros para carregar todos os usuários
+      // Com as políticas RLS, apenas admins conseguirão ver todos os perfis
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -41,7 +41,7 @@ const UsersManagement: React.FC = () => {
         return;
       }
 
-      // Get user roles - sem filtros para carregar todos os roles
+      // Carregar roles dos usuários - apenas admins conseguirão ver todos
       const { data: roles, error: rolesError } = await supabase
         .from('user_roles')
         .select('*');
@@ -52,7 +52,7 @@ const UsersManagement: React.FC = () => {
         return;
       }
 
-      // Combine data
+      // Combinar dados
       const usersData: UserData[] = profiles.map(profile => {
         const userRole = roles.find(role => role.user_id === profile.id);
         return {
@@ -78,6 +78,7 @@ const UsersManagement: React.FC = () => {
     try {
       console.log('Updating user role:', userId, newRole);
 
+      // Com as políticas RLS, apenas admins podem fazer isso
       const { error } = await supabase
         .from('user_roles')
         .upsert({
@@ -92,7 +93,7 @@ const UsersManagement: React.FC = () => {
         throw error;
       }
 
-      // Update local state
+      // Atualizar estado local
       setUsers(prev => prev.map(user => 
         user.id === userId ? { ...user, role: newRole } : user
       ));

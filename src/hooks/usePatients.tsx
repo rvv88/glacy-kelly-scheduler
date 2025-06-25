@@ -31,17 +31,12 @@ export const usePatients = () => {
       setLoading(true);
       console.log('Loading patients with role:', userRole);
       
-      let query = supabase
+      // Com as novas políticas RLS, não precisamos filtrar manualmente
+      // O banco já vai retornar apenas os dados que o usuário pode ver
+      const { data, error } = await supabase
         .from('patient_profiles')
-        .select('id, name, email, phone, cpf, user_id, clinic_id');
-
-      // Se for USER, só carrega seu próprio perfil
-      if (userRole === 'user') {
-        query = query.eq('user_id', user?.id);
-      }
-      // Se for ADMIN, carrega todos os perfis (sem filtro adicional)
-
-      const { data, error } = await query;
+        .select('id, name, email, phone, cpf, user_id, clinic_id')
+        .order('name', { ascending: true });
 
       if (error) {
         console.error('Error loading patients:', error);
