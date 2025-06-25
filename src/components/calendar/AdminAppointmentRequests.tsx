@@ -8,6 +8,8 @@ import { Check, X, Clock, User, Calendar, Building, Mail, Loader2 } from 'lucide
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAppointments } from '@/hooks/useAppointments';
+import { notificationService } from '@/services/notificationService';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const AdminAppointmentRequests: React.FC = () => {
@@ -19,13 +21,94 @@ const AdminAppointmentRequests: React.FC = () => {
   const confirmedAppointments = appointments.filter(app => app.status === 'confirmed');
   const cancelledAppointments = appointments.filter(app => app.status === 'cancelled');
 
+  const getUserIdFromPatientId = async (patientId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('patient_profiles')
+        .select('user_id, email')
+        .eq('id', patientId)
+        .single();
+
+      if (error) {
+        console.error('Error getting user data:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error getting user data:', error);
+      return null;
+    }
+  };
+
+  const getClinicAddress = async (clinicId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('clinics')
+        .select('street, number, complement, neighborhood, city, state')
+        .eq('id', clinicId)
+        .single();
+
+      if (error) {
+        console.error('Error getting clinic address:', error);
+        return '';
+      }
+
+      return `${data.street}, ${data.number}${data.complement ? `, ${data.complement}` : ''}, ${data.neighborhood}, ${data.city} - ${data.state}`;
+    } catch (error) {
+      console.error('Error getting clinic address:', error);
+      return '';
+    }
+  };
+
   const handleApproveAppointment = async (appointmentId: string) => {
     try {
       setProcessingId(appointmentId);
-      await updateAppointment(appointmentId, { status: 'confirmed' });
       
-      // Aqui você implementaria o envio do e-mail de confirmação
-      // await sendEmailNotification(appointmentId, 'confirmed');
+      // Buscar dados do agendamento
+      const appointment = appointments.find(app => app.id === appointmentId);
+      if (!appointment) return;
+
+      // Atualizar status do agendamento
+      await updateAppointment(appointmentId, { status: 'confirmed' });
+
+      // Buscar dados do usuário
+      const userData = await getUserIdFromPatientId(appointment.patient_id);
+      if (!userData) {
+        toast.success('Agendamento confirmado!');
+        return;
+      }
+
+      // Buscar endereço da clínica
+      const clinicAddress = await getClinicAddress(appointment.clinic_id);
+
+      // Criar notificação
+      await notificationService.createNotification({
+        userId: userData.user_id,
+        appointmentId: appointmentId,
+        type: 'confirmed',
+        appointmentDetails: {
+          date: appointment.date,
+          time: appointment.time,
+          clinicName: appointment.clinic_name,
+          serviceName: appointment.service_name
+        }
+      });
+
+      // Enviar email (simulado)
+      await notificationService.sendEmailNotification({
+        userId: userData.user_id,
+        appointmentId: appointmentId,
+        type: 'confirmed',
+        userEmail: userData.email,
+        clinicAddress: clinicAddress,
+        appointmentDetails: {
+          date: appointment.date,
+          time: appointment.time,
+          clinicName: appointment.clinic_name,
+          serviceName: appointment.service_name
+        }
+      });
       
       toast.success('Agendamento confirmado! Notificação enviada ao paciente.');
     } catch (error) {
@@ -39,10 +122,51 @@ const AdminAppointmentRequests: React.FC = () => {
   const handleRejectAppointment = async (appointmentId: string) => {
     try {
       setProcessingId(appointmentId);
-      await updateAppointment(appointmentId, { status: 'cancelled' });
       
-      // Aqui você implementaria o envio do e-mail de recusa
-      // await sendEmailNotification(appointmentId, 'rejected');
+      // Buscar dados do agendamento
+      const appointment = appointments.find(app => app.id === appointmentId);
+      if (!appointment) return;
+
+      // Atualizar status do agendamento
+      await updateAppointment(appointmentId, { status: 'cancelled' });
+
+      // Buscar dados do usuário
+      const userData = await getUserIdFromPatientId(appointment.patient_id);
+      if (!userData) {
+        toast.success('Agendamento recusado!');
+        return;
+      }
+
+      // Buscar endereço da clínica
+      const clinicAddress = await getClinicAddress(appointment.clinic_id);
+
+      // Criar notificação
+      await notificationService.createNotification({
+        userId: userData.user_id,
+        appointmentId: appointmentId,
+        type: 'cancelled',
+        appointmentDetails: {
+          date: appointment.date,
+          time: appointment.time,
+          clinicName: appointment.clinic_name,
+          serviceName: appointment.service_name
+        }
+      });
+
+      // Enviar email (simulado)
+      await notificationService.sendEmailNotification({
+        userId: userData.user_id,
+        appointmentId: appointmentId,
+        type: 'cancelled',
+        userEmail: userData.email,
+        clinicAddress: clinicAddress,
+        appointmentDetails: {
+          date: appointment.date,
+          time: appointment.time,
+          clinicName: appointment.clinic_name,
+          serviceName: appointment.service_name
+        }
+      });
       
       toast.success('Agendamento recusado! Notificação enviada ao paciente.');
     } catch (error) {

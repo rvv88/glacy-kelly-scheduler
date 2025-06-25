@@ -167,6 +167,47 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          appointment_id: string
+          created_at: string
+          id: string
+          message: string
+          read: boolean
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          appointment_id: string
+          created_at?: string
+          id?: string
+          message: string
+          read?: boolean
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          appointment_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patient_profiles: {
         Row: {
           address: string

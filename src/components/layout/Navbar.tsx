@@ -10,10 +10,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Bell, Menu, User, LogIn } from 'lucide-react';
+import { Menu, User, LogIn } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 import AuthModal from '@/components/auth/AuthModal';
+import NotificationBell from '@/components/notifications/NotificationBell';
 
 interface NavbarProps {
   isSidebarOpen: boolean;
@@ -22,6 +24,7 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
   const { user, profile, signOut } = useAuth();
+  const { isAdmin } = useUserRole();
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
   const handleSignOut = async () => {
@@ -58,9 +61,9 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
           <div className="flex items-center gap-4">
             {user ? (
               <>
-                <Button variant="ghost" size="icon">
-                  <Bell className="h-5 w-5" />
-                </Button>
+                {/* Mostrar notificações apenas para usuários não-admin */}
+                {!isAdmin() && <NotificationBell />}
+                
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="rounded-full">
