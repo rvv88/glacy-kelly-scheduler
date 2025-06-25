@@ -1,18 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import { Calendar } from '@/components/ui/calendar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Clock, Save, Calendar as CalendarIcon } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { useClinics } from '@/hooks/useClinics';
 import { useCalendarConfigurations, CalendarConfiguration } from '@/hooks/useCalendarConfigurations';
+import ClinicSelectorCard from './ClinicSelectorCard';
+import CalendarConfigCard from './CalendarConfigCard';
+import DayConfigCard from './DayConfigCard';
 
 const AdminCalendarConfig: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -145,18 +141,6 @@ const AdminCalendarConfig: React.FC = () => {
     updateLocalConfig({ blocked_times: blockedTimes });
   };
 
-  const isTimeBlocked = (time: string, config: CalendarConfiguration): boolean => {
-    // Verificar se está bloqueado manualmente
-    if (config.blocked_times.includes(time)) return true;
-    
-    // Verificar se está no horário de almoço
-    if (config.lunch_break_start && config.lunch_break_end) {
-      return time >= config.lunch_break_start && time < config.lunch_break_end;
-    }
-    
-    return false;
-  };
-
   if (clinicsLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -195,187 +179,30 @@ const AdminCalendarConfig: React.FC = () => {
       </div>
 
       {/* Seleção de Clínica */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Selecionar Clínica</CardTitle>
-          <CardDescription>
-            Escolha a clínica para configurar a agenda
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Select value={selectedClinicId} onValueChange={setSelectedClinicId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione uma clínica" />
-            </SelectTrigger>
-            <SelectContent>
-              {clinics.map((clinic) => (
-                <SelectItem key={clinic.id} value={clinic.id}>
-                  {clinic.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+      <ClinicSelectorCard
+        clinics={clinics}
+        selectedClinicId={selectedClinicId}
+        onClinicChange={setSelectedClinicId}
+      />
 
       {selectedClinicId && localConfig && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Calendário */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CalendarIcon className="h-5 w-5" />
-                Calendário
-              </CardTitle>
-              <CardDescription>
-                Selecione um dia para configurar
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                className="rounded-md border"
-              />
-              
-              <div className="mt-4 space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="apply-to-all"
-                    checked={applyToAll}
-                    onCheckedChange={setApplyToAll}
-                  />
-                  <Label htmlFor="apply-to-all">
-                    Aplicar configuração a todo o mês
-                  </Label>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <CalendarConfigCard
+            selectedDate={selectedDate}
+            onDateSelect={setSelectedDate}
+            applyToAll={applyToAll}
+            onApplyToAllChange={setApplyToAll}
+          />
 
           {/* Configuração do Dia */}
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {selectedDate ? format(selectedDate, "dd 'de' MMMM", { locale: ptBR }) : 'Selecione uma data'}
-              </CardTitle>
-              <CardDescription>
-                Configure os horários para este dia
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Status do dia */}
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="day-open"
-                  checked={localConfig.is_open}
-                  onCheckedChange={(is_open) => updateLocalConfig({ is_open })}
-                />
-                <Label htmlFor="day-open">
-                  Agenda aberta neste dia
-                </Label>
-              </div>
-
-              {localConfig.is_open && (
-                <>
-                  {/* Horários de funcionamento */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="start-time">Horário de Abertura</Label>
-                      <Input
-                        id="start-time"
-                        type="time"
-                        value={localConfig.start_time}
-                        onChange={(e) => updateLocalConfig({ start_time: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="end-time">Horário de Fechamento</Label>
-                      <Input
-                        id="end-time"
-                        type="time"
-                        value={localConfig.end_time}
-                        onChange={(e) => updateLocalConfig({ end_time: e.target.value })}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Intervalo entre consultas */}
-                  <div>
-                    <Label htmlFor="interval">Intervalo entre consultas</Label>
-                    <Select
-                      value={localConfig.interval_minutes.toString()}
-                      onValueChange={(value) => updateLocalConfig({ interval_minutes: parseInt(value) })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="15">15 minutos</SelectItem>
-                        <SelectItem value="30">30 minutos</SelectItem>
-                        <SelectItem value="60">1 hora</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Horário de almoço */}
-                  <div className="space-y-2">
-                    <Label>Horário de Almoço (opcional)</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input
-                        type="time"
-                        placeholder="Início"
-                        value={localConfig.lunch_break_start || ''}
-                        onChange={(e) => updateLocalConfig({
-                          lunch_break_start: e.target.value || undefined
-                        })}
-                      />
-                      <Input
-                        type="time"
-                        placeholder="Fim"
-                        value={localConfig.lunch_break_end || ''}
-                        onChange={(e) => updateLocalConfig({
-                          lunch_break_end: e.target.value || undefined
-                        })}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Horários disponíveis */}
-                  <div>
-                    <Label>Horários Disponíveis</Label>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Clique nos horários para bloquear/desbloquear (vermelho = bloqueado)
-                    </p>
-                    <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
-                      {timeSlots.map((time) => {
-                        const isBlocked = isTimeBlocked(time, localConfig);
-                        const isManuallyBlocked = localConfig.blocked_times.includes(time);
-                        
-                        return (
-                          <Button
-                            key={time}
-                            variant={isManuallyBlocked ? "destructive" : "outline"}
-                            size="sm"
-                            onClick={() => toggleBlockedTime(time)}
-                            className={`text-xs ${
-                              isBlocked && !isManuallyBlocked 
-                                ? 'opacity-50 cursor-not-allowed bg-gray-100' 
-                                : ''
-                            }`}
-                            disabled={isBlocked && !isManuallyBlocked}
-                          >
-                            {time}
-                          </Button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
+          <DayConfigCard
+            selectedDate={selectedDate}
+            config={localConfig}
+            onUpdateConfig={updateLocalConfig}
+            timeSlots={timeSlots}
+            onToggleBlockedTime={toggleBlockedTime}
+          />
         </div>
       )}
     </div>
