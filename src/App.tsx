@@ -72,6 +72,13 @@ const AppContent = () => (
             </Layout>
           } />
           
+          {/* Rota para editar dados do usuário logado */}
+          <Route path="/patients/new" element={
+            <Layout>
+              <PatientFormPage />
+            </Layout>
+          } />
+          
           <Route path="/profile" element={
             <Layout>
               <ProfilePage />

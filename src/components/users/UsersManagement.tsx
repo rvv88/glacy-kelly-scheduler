@@ -27,9 +27,9 @@ const UsersManagement: React.FC = () => {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      console.log('Loading users...');
+      console.log('Loading all users...');
 
-      // Get all profiles
+      // Get all profiles - sem filtros para carregar todos os usuários
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -37,16 +37,18 @@ const UsersManagement: React.FC = () => {
 
       if (profilesError) {
         console.error('Error loading profiles:', profilesError);
+        toast.error('Erro ao carregar perfis de usuários');
         return;
       }
 
-      // Get user roles
+      // Get user roles - sem filtros para carregar todos os roles
       const { data: roles, error: rolesError } = await supabase
         .from('user_roles')
         .select('*');
 
       if (rolesError) {
         console.error('Error loading user roles:', rolesError);
+        toast.error('Erro ao carregar roles dos usuários');
         return;
       }
 
@@ -55,14 +57,14 @@ const UsersManagement: React.FC = () => {
         const userRole = roles.find(role => role.user_id === profile.id);
         return {
           id: profile.id,
-          email: profile.email || '',
-          full_name: profile.full_name || 'Usuário sem nome',
+          email: profile.email || 'Email não informado',
+          full_name: profile.full_name || 'Nome não informado',
           role: userRole?.role || 'user',
           created_at: profile.created_at
         };
       });
 
-      console.log('Users loaded:', usersData);
+      console.log('All users loaded:', usersData);
       setUsers(usersData);
     } catch (error) {
       console.error('Error loading users:', error);
@@ -106,7 +108,7 @@ const UsersManagement: React.FC = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Carregando usuários...</span>
+        <span className="ml-2">Carregando todos os usuários...</span>
       </div>
     );
   }
@@ -117,9 +119,12 @@ const UsersManagement: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Gerenciamento de Usuários</h2>
           <p className="text-muted-foreground">
-            Gerencie os usuários do sistema e seus perfis de acesso
+            Gerencie todos os usuários do sistema e seus perfis de acesso ({users.length} usuários cadastrados)
           </p>
         </div>
+        <Button onClick={loadUsers} variant="outline">
+          Atualizar Lista
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-4">

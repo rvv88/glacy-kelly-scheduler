@@ -39,7 +39,7 @@ export const usePatients = () => {
       if (userRole === 'user') {
         query = query.eq('user_id', user?.id);
       }
-      // Se for ADMIN, carrega todos os perfis
+      // Se for ADMIN, carrega todos os perfis (sem filtro adicional)
 
       const { data, error } = await query;
 
