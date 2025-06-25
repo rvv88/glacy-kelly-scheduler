@@ -335,6 +335,27 @@ export type Database = {
           time_slot: string
         }[]
       }
+      get_calendar_configurations: {
+        Args: {
+          p_clinic_id: string
+          p_start_date?: string
+          p_end_date?: string
+        }
+        Returns: {
+          id: string
+          clinic_id: string
+          date: string
+          is_open: boolean
+          start_time: string
+          end_time: string
+          interval_minutes: number
+          blocked_times: string[]
+          lunch_break_start: string
+          lunch_break_end: string
+          created_at: string
+          updated_at: string
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -345,6 +366,33 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
         }
         Returns: boolean
+      }
+      save_calendar_configuration: {
+        Args: {
+          p_clinic_id: string
+          p_date: string
+          p_is_open: boolean
+          p_start_time: string
+          p_end_time: string
+          p_interval_minutes: number
+          p_blocked_times: string[]
+          p_lunch_break_start?: string
+          p_lunch_break_end?: string
+        }
+        Returns: {
+          blocked_times: string[] | null
+          clinic_id: string
+          created_at: string
+          date: string
+          end_time: string
+          id: string
+          interval_minutes: number
+          is_open: boolean
+          lunch_break_end: string | null
+          lunch_break_start: string | null
+          start_time: string
+          updated_at: string
+        }
       }
     }
     Enums: {

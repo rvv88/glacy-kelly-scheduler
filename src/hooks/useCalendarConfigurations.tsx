@@ -23,21 +23,17 @@ export const useCalendarConfigurations = () => {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
 
-  const loadConfigurations = async (clinicId?: string) => {
+  const loadConfigurations = async (clinicId?: string, startDate?: string, endDate?: string) => {
     try {
       setLoading(true);
       console.log('Loading calendar configurations for clinic:', clinicId);
 
-      let query = supabase
-        .from('calendar_configurations')
-        .select('*')
-        .order('date', { ascending: true });
-
-      if (clinicId) {
-        query = query.eq('clinic_id', clinicId);
-      }
-
-      const { data, error } = await query;
+      const { data, error } = await supabase
+        .rpc('get_calendar_configurations', {
+          p_clinic_id: clinicId,
+          p_start_date: startDate || null,
+          p_end_date: endDate || null
+        });
 
       if (error) {
         console.error('Error loading calendar configurations:', error);
@@ -58,26 +54,18 @@ export const useCalendarConfigurations = () => {
     try {
       console.log('Saving calendar configuration:', config);
 
-      // Preparar dados para inserção/atualização
-      const configData = {
-        clinic_id: config.clinic_id,
-        date: config.date,
-        is_open: config.is_open ?? true,
-        start_time: config.start_time ?? '08:00',
-        end_time: config.end_time ?? '18:00',
-        interval_minutes: config.interval_minutes ?? 30,
-        lunch_break_start: config.lunch_break_start || null,
-        lunch_break_end: config.lunch_break_end || null,
-        blocked_times: config.blocked_times ?? []
-      };
-
       const { data, error } = await supabase
-        .from('calendar_configurations')
-        .upsert(configData, {
-          onConflict: 'clinic_id,date'
-        })
-        .select()
-        .single();
+        .rpc('save_calendar_configuration', {
+          p_clinic_id: config.clinic_id,
+          p_date: config.date,
+          p_is_open: config.is_open ?? true,
+          p_start_time: config.start_time ?? '08:00',
+          p_end_time: config.end_time ?? '18:00',
+          p_interval_minutes: config.interval_minutes ?? 30,
+          p_blocked_times: config.blocked_times ?? [],
+          p_lunch_break_start: config.lunch_break_start || null,
+          p_lunch_break_end: config.lunch_break_end || null
+        });
 
       if (error) {
         console.error('Error saving calendar configuration:', error);
@@ -117,23 +105,19 @@ export const useCalendarConfigurations = () => {
 
       if (error) {
         console.error('Error getting available time slots:', error);
-        console.error('Error details:', error);
         return [];
       }
 
       console.log('Raw data from RPC:', data);
       
-      // Verificar se data existe e é um array
       if (!data || !Array.isArray(data)) {
         console.log('No data returned or data is not an array');
         return [];
       }
 
-      // Mapear os resultados e formatear os horários
       const timeSlots = data.map((slot: any) => {
         console.log('Processing slot:', slot);
         if (slot && slot.time_slot) {
-          // Formatar o horário se necessário (remover segundos se presentes)
           const timeString = slot.time_slot.toString();
           return timeString.substring(0, 5); // Manter apenas HH:MM
         }

@@ -32,11 +32,16 @@ export const useCalendarConfig = () => {
     blocked_times: [] as string[]
   });
 
+  // Carregar configurações quando selecionar clínica
   useEffect(() => {
     if (selectedClinicId) {
-      loadConfigurations(selectedClinicId);
+      const today = new Date();
+      const startOfMonth = format(new Date(today.getFullYear(), today.getMonth(), 1), 'yyyy-MM-dd');
+      const endOfMonth = format(new Date(today.getFullYear(), today.getMonth() + 1, 0), 'yyyy-MM-dd');
+      
+      loadConfigurations(selectedClinicId, startOfMonth, endOfMonth);
     }
-  }, [selectedClinicId]);
+  }, [selectedClinicId, loadConfigurations]);
 
   // Gerar horários disponíveis com base na configuração
   const generateTimeSlots = (config: typeof monthlyConfig): string[] => {
@@ -86,7 +91,7 @@ export const useCalendarConfig = () => {
       setSelectedDate(date);
       setIsMonthlyConfig(false);
       
-      // Carrega configuração específica do dia se existir
+      // Carregar configuração específica do dia se existir
       const dateKey = format(date, 'yyyy-MM-dd');
       const existingConfig = configurations.find(config => 
         config.clinic_id === selectedClinicId && config.date === dateKey
@@ -127,19 +132,25 @@ export const useCalendarConfig = () => {
         const promises = [];
         for (let day = 1; day <= daysInMonth; day++) {
           const dayKey = format(new Date(year, month, day), 'yyyy-MM-dd');
-          const configToSave: CalendarConfiguration = {
-            id: '',
-            clinic_id: selectedClinicId,
-            date: dayKey,
-            is_open: monthlyConfig.is_open,
-            start_time: monthlyConfig.start_time,
-            end_time: monthlyConfig.end_time,
-            interval_minutes: monthlyConfig.interval_minutes,
-            blocked_times: monthlyConfig.blocked_times,
-            lunch_break_start: undefined,
-            lunch_break_end: undefined
-          };
-          promises.push(saveConfiguration(configToSave));
+          
+          // Verificar se já existe configuração específica para este dia
+          const existingDayConfig = configurations.find(config => 
+            config.clinic_id === selectedClinicId && config.date === dayKey
+          );
+          
+          // Só aplicar configuração mensal se não houver configuração específica do dia
+          if (!existingDayConfig) {
+            const configToSave = {
+              clinic_id: selectedClinicId,
+              date: dayKey,
+              is_open: monthlyConfig.is_open,
+              start_time: monthlyConfig.start_time,
+              end_time: monthlyConfig.end_time,
+              interval_minutes: monthlyConfig.interval_minutes,
+              blocked_times: monthlyConfig.blocked_times
+            };
+            promises.push(saveConfiguration(configToSave));
+          }
         }
         
         await Promise.all(promises);
@@ -147,21 +158,27 @@ export const useCalendarConfig = () => {
       } else if (selectedDate) {
         // Salvar apenas para o dia específico
         const dateKey = format(selectedDate, 'yyyy-MM-dd');
-        const configToSave: CalendarConfiguration = {
-          id: '',
+        const configToSave = {
           clinic_id: selectedClinicId,
           date: dateKey,
           is_open: dailyConfig.is_open,
           start_time: dailyConfig.start_time,
           end_time: dailyConfig.end_time,
           interval_minutes: dailyConfig.interval_minutes,
-          blocked_times: dailyConfig.blocked_times,
-          lunch_break_start: undefined,
-          lunch_break_end: undefined
+          blocked_times: dailyConfig.blocked_times
         };
         
         await saveConfiguration(configToSave);
         toast.success(`Configuração salva para ${format(selectedDate, 'dd/MM/yyyy')}!`);
+      }
+      
+      // Recarregar configurações após salvar
+      if (selectedClinicId) {
+        const today = new Date();
+        const startOfMonth = format(new Date(today.getFullYear(), today.getMonth(), 1), 'yyyy-MM-dd');
+        const endOfMonth = format(new Date(today.getFullYear(), today.getMonth() + 1, 0), 'yyyy-MM-dd');
+        
+        await loadConfigurations(selectedClinicId, startOfMonth, endOfMonth);
       }
     } catch (error) {
       console.error('Erro ao salvar configuração:', error);
