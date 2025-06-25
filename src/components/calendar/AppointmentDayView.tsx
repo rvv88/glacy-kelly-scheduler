@@ -7,7 +7,6 @@ import { Clock, Plus, Check, X, User, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Appointment } from '@/types/appointment';
-import { useCalendarConfigurations } from '@/hooks/useCalendarConfigurations';
 
 interface AppointmentDayViewProps {
   selectedDate: Date;
@@ -32,70 +31,48 @@ const AppointmentDayView: React.FC<AppointmentDayViewProps> = ({
   getStatusColor,
   getStatusText,
 }) => {
-  const { getAvailableTimeSlots, configurations, loadConfigurations } = useCalendarConfigurations();
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
-  const [allTimeSlots, setAllTimeSlots] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const loadSlotsAndConfig = async () => {
+    const loadSlots = async () => {
       if (selectedClinicId && selectedDate) {
         setLoading(true);
         try {
-          const dateStr = format(selectedDate, 'yyyy-MM-dd');
-          
-          // Carregar configurações da clínica
-          await loadConfigurations(selectedClinicId);
-          
-          // Carregar horários disponíveis
-          const slots = await getAvailableTimeSlots(selectedClinicId, dateStr);
-          console.log('Available slots loaded:', slots);
-          setAvailableSlots(slots);
-          
-          // Gerar todos os horários possíveis baseado na configuração
-          const config = configurations.find(c => c.clinic_id === selectedClinicId && c.date === dateStr);
-          if (config && config.is_open) {
-            const allSlots = generateAllTimeSlots(config.start_time, config.end_time, config.interval_minutes);
-            setAllTimeSlots(allSlots);
-          } else {
-            // Usar horários padrão se não houver configuração
-            const defaultSlots = generateAllTimeSlots('08:00', '18:00', 30);
-            setAllTimeSlots(defaultSlots);
+          // Gerar horários padrão de 8:00 às 18:00 com intervalo de 30 minutos
+          const slots: string[] = [];
+          const startHour = 8;
+          const endHour = 18;
+          const intervalMinutes = 30;
+
+          for (let hour = startHour; hour < endHour; hour++) {
+            for (let minute = 0; minute < 60; minute += intervalMinutes) {
+              const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+              slots.push(timeString);
+            }
           }
+
+          console.log('Generated available slots:', slots);
+          setAvailableSlots(slots);
         } catch (error) {
           console.error('Erro ao carregar horários:', error);
           setAvailableSlots([]);
-          setAllTimeSlots([]);
         } finally {
           setLoading(false);
         }
       }
     };
 
-    loadSlotsAndConfig();
-  }, [selectedClinicId, selectedDate, getAvailableTimeSlots, configurations, loadConfigurations]);
-
-  const generateAllTimeSlots = (startTime: string, endTime: string, intervalMinutes: number): string[] => {
-    const slots: string[] = [];
-    const start = new Date(`2000-01-01T${startTime}:00`);
-    const end = new Date(`2000-01-01T${endTime}:00`);
-    
-    let current = new Date(start);
-    while (current < end) {
-      const timeString = format(current, 'HH:mm');
-      slots.push(timeString);
-      current.setMinutes(current.getMinutes() + intervalMinutes);
-    }
-    
-    return slots;
-  };
+    loadSlots();
+  }, [selectedClinicId, selectedDate]);
 
   const getAppointmentForTime = (time: string): Appointment | undefined => {
     return appointments.find(apt => apt.time === time);
   };
 
   const isTimeAvailable = (time: string): boolean => {
-    return availableSlots.includes(time) && !getAppointmentForTime(time);
+    // Sempre considerar disponível se não há agendamento para este horário
+    return !getAppointmentForTime(time);
   };
 
   if (loading) {
@@ -117,114 +94,89 @@ const AppointmentDayView: React.FC<AppointmentDayViewProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {allTimeSlots.length === 0 ? (
-          <div className="text-center p-8">
-            <p className="text-muted-foreground">
-              Nenhum horário configurado para esta data.
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Configure a agenda para esta clínica e data primeiro.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {allTimeSlots.map((time) => {
-              const appointment = getAppointmentForTime(time);
-              const isAvailable = isTimeAvailable(time);
-              
-              if (appointment) {
-                return (
-                  <div
-                    key={time}
-                    className={`p-4 rounded-lg border-2 ${getStatusColor(appointment.status)}`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-semibold">{time}</span>
-                      <Badge variant="secondary">
-                        {getStatusText(appointment.status)}
-                      </Badge>
-                    </div>
-                    <div className="space-y-1 text-sm">
-                      <div className="flex items-center gap-1">
-                        <User className="h-3 w-3" />
-                        <span>{appointment.patient_name}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        <span>{appointment.service_name}</span>
-                      </div>
-                      {appointment.notes && (
-                        <p className="text-muted-foreground text-xs mt-1">
-                          {appointment.notes}
-                        </p>
-                      )}
-                    </div>
-                    {isAdmin && (
-                      <div className="flex gap-2 mt-3">
-                        {appointment.status === 'pending' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => onConfirmAppointment(appointment.id)}
-                            className="flex-1"
-                          >
-                            <Check className="h-3 w-3 mr-1" />
-                            Confirmar
-                          </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onCancelAppointment(appointment.id)}
-                          className="flex-1"
-                        >
-                          <X className="h-3 w-3 mr-1" />
-                          Cancelar
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-
-              if (isAvailable) {
-                return (
-                  <div
-                    key={time}
-                    className="p-4 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors cursor-pointer"
-                    onClick={() => onNewAppointment(time)}
-                  >
-                    <div className="flex items-center justify-center h-full">
-                      <div className="text-center">
-                        <Plus className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
-                        <span className="text-sm font-medium">{time}</span>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Disponível
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              }
-
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {availableSlots.map((time) => {
+            const appointment = getAppointmentForTime(time);
+            const isAvailable = isTimeAvailable(time);
+            
+            if (appointment) {
               return (
                 <div
                   key={time}
-                  className="p-4 rounded-lg border-2 border-gray-200 bg-gray-50 opacity-50"
+                  className={`p-4 rounded-lg border-2 ${getStatusColor(appointment.status)}`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-semibold">{time}</span>
+                    <Badge variant="secondary">
+                      {getStatusText(appointment.status)}
+                    </Badge>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex items-center gap-1">
+                      <User className="h-3 w-3" />
+                      <span>{appointment.patient_name}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      <span>{appointment.service_name}</span>
+                    </div>
+                    {appointment.notes && (
+                      <p className="text-muted-foreground text-xs mt-1">
+                        {appointment.notes}
+                      </p>
+                    )}
+                  </div>
+                  {isAdmin && (
+                    <div className="flex gap-2 mt-3">
+                      {appointment.status === 'pending' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onConfirmAppointment(appointment.id)}
+                          className="flex-1"
+                        >
+                          <Check className="h-3 w-3 mr-1" />
+                          Confirmar
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onCancelAppointment(appointment.id)}
+                        className="flex-1"
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        Cancelar
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            if (isAvailable) {
+              return (
+                <div
+                  key={time}
+                  className="p-4 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors cursor-pointer"
+                  onClick={() => onNewAppointment(time)}
                 >
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center">
-                      <span className="text-sm font-medium text-muted-foreground">{time}</span>
+                      <Plus className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+                      <span className="text-sm font-medium">{time}</span>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Indisponível
+                        Disponível
                       </p>
                     </div>
                   </div>
                 </div>
               );
-            })}
-          </div>
-        )}
+            }
+
+            return null;
+          })}
+        </div>
       </CardContent>
     </Card>
   );

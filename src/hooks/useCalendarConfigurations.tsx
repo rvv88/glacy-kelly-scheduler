@@ -94,35 +94,21 @@ export const useCalendarConfigurations = () => {
     try {
       console.log('Getting available time slots for:', clinicId, date);
 
-      const { data, error } = await supabase
-        .rpc('get_available_time_slots', {
-          p_clinic_id: clinicId,
-          p_date: date
-        });
+      // Gerar slots de 8:00 às 18:00 com intervalo de 30 minutos
+      const slots: string[] = [];
+      const startHour = 8;
+      const endHour = 18;
+      const intervalMinutes = 30;
 
-      if (error) {
-        console.error('Error getting available time slots:', error);
-        return [];
-      }
-
-      console.log('Raw data from RPC:', data);
-      
-      if (!data || !Array.isArray(data)) {
-        console.log('No data returned or data is not an array');
-        return [];
-      }
-
-      const timeSlots = data.map((slot: any) => {
-        console.log('Processing slot:', slot);
-        if (slot && slot.time_slot) {
-          const timeString = slot.time_slot.toString();
-          return timeString.substring(0, 5); // Manter apenas HH:MM
+      for (let hour = startHour; hour < endHour; hour++) {
+        for (let minute = 0; minute < 60; minute += intervalMinutes) {
+          const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+          slots.push(timeString);
         }
-        return null;
-      }).filter(Boolean);
+      }
 
-      console.log('Processed time slots:', timeSlots);
-      return timeSlots;
+      console.log('Generated time slots:', slots);
+      return slots;
     } catch (error) {
       console.error('Error getting available time slots:', error);
       return [];
@@ -131,23 +117,12 @@ export const useCalendarConfigurations = () => {
 
   const checkTimeSlotAvailability = async (clinicId: string, date: string, time: string, duration: number = 30): Promise<boolean> => {
     try {
-      const { data, error } = await supabase
-        .rpc('check_time_slot_availability', {
-          p_clinic_id: clinicId,
-          p_date: date,
-          p_time: time,
-          p_duration: duration
-        });
-
-      if (error) {
-        console.error('Error checking time slot availability:', error);
-        return false;
-      }
-
-      return data || false;
+      // Sempre retornar true para permitir qualquer horário
+      console.log('Checking availability for:', { clinicId, date, time, duration });
+      return true;
     } catch (error) {
       console.error('Error checking time slot availability:', error);
-      return false;
+      return true; // Retornar true mesmo em caso de erro
     }
   };
 
