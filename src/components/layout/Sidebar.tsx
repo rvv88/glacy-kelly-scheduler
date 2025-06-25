@@ -1,9 +1,21 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Home, LayoutDashboard, Calendar, Users, FileText, Building, FileClock, Settings, LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import {
+  Calendar,
+  Home,
+  Settings,
+  Users,
+  FileText,
+  FileClock,
+  LayoutDashboard,
+  Building,
+  LogIn
+} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -11,12 +23,13 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const location = useLocation();
-  const { user, userRole, roleLoading } = useAuth();
-
-  // Função para montar os links do menu lateral conforme o papel do usuário
+  const { user } = useAuth();
+  const { userRole, loading: roleLoading } = useUserRole();
+  
+  // Definir links baseado no status de autenticação e role do usuário
   const getAvailableLinks = () => {
     if (!user) {
-      // Usuário não autenticado
+      // Usuário não logado - apenas Home e Sobre
       return [
         { name: 'Home', href: '/', icon: Home },
         { name: 'Sobre', href: '/about', icon: Home },
@@ -34,7 +47,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
         { name: 'Agenda', href: '/calendar', icon: Calendar },
         { name: 'Meus Dados', href: '/patients', icon: Users },
-        { name: 'Usuários', href: '/users', icon: Users }, // <-- Adicionado aqui
         { name: 'Serviços', href: '/services', icon: FileText },
         { name: 'Clínicas', href: '/clinics', icon: Building },
         { name: 'Histórico', href: '/history', icon: FileClock },
