@@ -2,6 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Building2 } from 'lucide-react';
 
 interface Clinic {
   id: string;
@@ -22,9 +23,12 @@ const ClinicSelector: React.FC<ClinicSelectorProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Selecionar Clínica</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Building2 className="h-5 w-5" />
+          Selecionar Clínica
+        </CardTitle>
         <CardDescription>
-          Escolha a clínica para visualizar a agenda
+          Escolha a unidade para configurar a agenda
         </CardDescription>
       </CardHeader>
       <CardContent>

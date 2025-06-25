@@ -1,28 +1,29 @@
 
 import React from 'react';
-import { useAdminCalendarConfig } from '@/hooks/useAdminCalendarConfig';
-import { generateTimeSlots } from '@/utils/timeSlotUtils';
-import AdminCalendarConfigHeader from './AdminCalendarConfigHeader';
-import ClinicSelectorCard from './ClinicSelectorCard';
-import CalendarConfigCard from './CalendarConfigCard';
-import DayConfigCard from './DayConfigCard';
+import { Button } from '@/components/ui/button';
+import { Save } from 'lucide-react';
+import { useCalendarConfig } from '@/hooks/useCalendarConfig';
+import ClinicSelector from './ClinicSelector';
+import ConfigurationPanel from './ConfigurationPanel';
+import TimeSlotSelector from './TimeSlotSelector';
+import CalendarSelector from './CalendarSelector';
 
 const AdminCalendarConfig: React.FC = () => {
   const {
-    selectedDate,
-    setSelectedDate,
     selectedClinicId,
     setSelectedClinicId,
-    applyToAll,
-    setApplyToAll,
+    selectedDate,
+    isMonthlyConfig,
     isLoading,
     clinics,
     clinicsLoading,
-    localConfig,
-    updateLocalConfig,
-    toggleBlockedTime,
-    handleSaveConfiguration,
-  } = useAdminCalendarConfig();
+    currentConfig,
+    timeSlots,
+    selectDate,
+    toggleTimeSlot,
+    saveConfig,
+    setCurrentConfig
+  } = useCalendarConfig();
 
   if (clinicsLoading) {
     return (
@@ -32,49 +33,61 @@ const AdminCalendarConfig: React.FC = () => {
     );
   }
 
-  if (!localConfig && selectedClinicId && selectedDate) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
-
-  const timeSlots = localConfig ? generateTimeSlots(localConfig) : [];
-
   return (
     <div className="space-y-6">
-      <AdminCalendarConfigHeader
-        onSave={handleSaveConfiguration}
-        isLoading={isLoading}
-        disabled={!selectedClinicId || !localConfig}
-      />
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Configurar Agenda</h2>
+          <p className="text-muted-foreground">
+            Configure os horários disponíveis para agendamento por clínica
+          </p>
+        </div>
+        <Button 
+          onClick={saveConfig}
+          disabled={!selectedClinicId || isLoading}
+          className="flex items-center gap-2"
+        >
+          <Save className="h-4 w-4" />
+          {isLoading ? 'Salvando...' : 'Salvar'}
+        </Button>
+      </div>
 
       {/* Seleção de Clínica */}
-      <ClinicSelectorCard
+      <ClinicSelector
         clinics={clinics}
         selectedClinicId={selectedClinicId}
         onClinicChange={setSelectedClinicId}
       />
 
-      {selectedClinicId && localConfig && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Calendário */}
-          <CalendarConfigCard
-            selectedDate={selectedDate}
-            onDateSelect={setSelectedDate}
-            applyToAll={applyToAll}
-            onApplyToAllChange={setApplyToAll}
-          />
+      {selectedClinicId && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Calendário - Lado Esquerdo */}
+          <div className="lg:col-span-1">
+            <CalendarSelector
+              selectedDate={selectedDate}
+              onDateSelect={selectDate}
+            />
+          </div>
 
-          {/* Configuração do Dia */}
-          <DayConfigCard
-            selectedDate={selectedDate}
-            config={localConfig}
-            onUpdateConfig={updateLocalConfig}
-            timeSlots={timeSlots}
-            onToggleBlockedTime={toggleBlockedTime}
-          />
+          {/* Configurações - Lado Direito */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Parâmetros de Configuração */}
+            <ConfigurationPanel
+              config={currentConfig}
+              onConfigChange={(updates) => setCurrentConfig(prev => ({ ...prev, ...updates }))}
+              isMonthlyConfig={isMonthlyConfig}
+              selectedDate={selectedDate}
+            />
+
+            {/* Horários Disponíveis */}
+            <TimeSlotSelector
+              timeSlots={timeSlots}
+              blockedTimes={currentConfig.blocked_times}
+              onToggleTimeSlot={toggleTimeSlot}
+              isOpen={currentConfig.is_open}
+            />
+          </div>
         </div>
       )}
     </div>
