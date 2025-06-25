@@ -7,8 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Clock, Save, Trash2, Plus, Calendar as CalendarIcon } from 'lucide-react';
+import { Clock, Save, Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -19,6 +18,7 @@ const AdminCalendarConfig: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedClinicId, setSelectedClinicId] = useState<string>('');
   const [applyToAll, setApplyToAll] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { clinics, loading: clinicsLoading } = useClinics();
   const { configurations, loading: configLoading, saveConfiguration, loadConfigurations } = useCalendarConfigurations();
   
@@ -33,37 +33,40 @@ const AdminCalendarConfig: React.FC = () => {
     lunch_break_end: '13:00'
   };
 
+  // Estado local para as configurações sendo editadas
+  const [localConfig, setLocalConfig] = useState<CalendarConfiguration | null>(null);
+
   useEffect(() => {
     if (selectedClinicId) {
       loadConfigurations(selectedClinicId);
     }
   }, [selectedClinicId]);
 
-  const getCurrentDayConfig = (): CalendarConfiguration => {
-    const dateKey = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
-    const existing = configurations.find(config => 
-      config.clinic_id === selectedClinicId && config.date === dateKey
-    );
-    
-    return existing || { 
-      ...defaultConfig, 
-      id: '', 
-      clinic_id: selectedClinicId, 
-      date: dateKey 
-    };
-  };
+  useEffect(() => {
+    if (selectedDate && selectedClinicId) {
+      const dateKey = format(selectedDate, 'yyyy-MM-dd');
+      const existing = configurations.find(config => 
+        config.clinic_id === selectedClinicId && config.date === dateKey
+      );
+      
+      const config = existing || { 
+        ...defaultConfig, 
+        id: '', 
+        clinic_id: selectedClinicId, 
+        date: dateKey 
+      };
+      
+      setLocalConfig(config);
+    }
+  }, [selectedDate, selectedClinicId, configurations]);
 
-  const updateDayConfig = async (updates: Partial<CalendarConfiguration>) => {
-    if (!selectedDate || !selectedClinicId) return;
+  const handleSaveConfiguration = async () => {
+    if (!localConfig || !selectedDate || !selectedClinicId) {
+      toast.error('Selecione uma clínica e uma data');
+      return;
+    }
     
-    const dateKey = format(selectedDate, 'yyyy-MM-dd');
-    const currentConfig = getCurrentDayConfig();
-    const newConfig = { 
-      ...currentConfig, 
-      ...updates, 
-      clinic_id: selectedClinicId,
-      date: dateKey 
-    };
+    setIsLoading(true);
     
     try {
       if (applyToAll) {
@@ -75,18 +78,36 @@ const AdminCalendarConfig: React.FC = () => {
         const promises = [];
         for (let day = 1; day <= daysInMonth; day++) {
           const dayKey = format(new Date(year, month, day), 'yyyy-MM-dd');
-          const configForDay = { ...newConfig, date: dayKey };
+          const configForDay = { 
+            ...localConfig, 
+            date: dayKey,
+            clinic_id: selectedClinicId
+          };
           promises.push(saveConfiguration(configForDay));
         }
         
         await Promise.all(promises);
         toast.success('Configuração aplicada a todo o mês!');
       } else {
-        await saveConfiguration(newConfig);
+        const configToSave = {
+          ...localConfig,
+          clinic_id: selectedClinicId,
+          date: format(selectedDate, 'yyyy-MM-dd')
+        };
+        await saveConfiguration(configToSave);
         toast.success('Configuração salva com sucesso!');
       }
     } catch (error) {
+      console.error('Erro ao salvar configuração:', error);
       toast.error('Erro ao salvar configuração');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateLocalConfig = (updates: Partial<CalendarConfiguration>) => {
+    if (localConfig) {
+      setLocalConfig({ ...localConfig, ...updates });
     }
   };
 
@@ -107,13 +128,14 @@ const AdminCalendarConfig: React.FC = () => {
     return slots;
   };
 
-  const toggleBlockedTime = async (time: string) => {
-    const currentConfig = getCurrentDayConfig();
-    const blockedTimes = currentConfig.blocked_times.includes(time)
-      ? currentConfig.blocked_times.filter(t => t !== time)
-      : [...currentConfig.blocked_times, time];
+  const toggleBlockedTime = (time: string) => {
+    if (!localConfig) return;
     
-    await updateDayConfig({ blocked_times: blockedTimes });
+    const blockedTimes = localConfig.blocked_times.includes(time)
+      ? localConfig.blocked_times.filter(t => t !== time)
+      : [...localConfig.blocked_times, time];
+    
+    updateLocalConfig({ blocked_times: blockedTimes });
   };
 
   const isTimeBlocked = (time: string, config: CalendarConfiguration): boolean => {
@@ -128,8 +150,11 @@ const AdminCalendarConfig: React.FC = () => {
     return false;
   };
 
-  const currentConfig = getCurrentDayConfig();
-  const timeSlots = generateTimeSlots(currentConfig);
+  if (!localConfig) {
+    return <div>Carregando...</div>;
+  }
+
+  const timeSlots = generateTimeSlots(localConfig);
 
   return (
     <div className="space-y-6">
@@ -140,6 +165,14 @@ const AdminCalendarConfig: React.FC = () => {
             Configure os horários disponíveis para agendamento por clínica
           </p>
         </div>
+        <Button 
+          onClick={handleSaveConfiguration}
+          disabled={isLoading || !selectedClinicId}
+          className="flex items-center gap-2"
+        >
+          <Save className="h-4 w-4" />
+          {isLoading ? 'Salvando...' : 'Salvar Configuração'}
+        </Button>
       </div>
 
       {/* Seleção de Clínica */}
@@ -158,7 +191,7 @@ const AdminCalendarConfig: React.FC = () => {
             <SelectContent>
               {clinics.map((clinic) => (
                 <SelectItem key={clinic.id} value={clinic.id}>
-                  {clinic.name}
+                  {clinic.unit_name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -217,15 +250,15 @@ const AdminCalendarConfig: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <Switch
                   id="day-open"
-                  checked={currentConfig.is_open}
-                  onCheckedChange={(is_open) => updateDayConfig({ is_open })}
+                  checked={localConfig.is_open}
+                  onCheckedChange={(is_open) => updateLocalConfig({ is_open })}
                 />
                 <Label htmlFor="day-open">
                   Agenda aberta neste dia
                 </Label>
               </div>
 
-              {currentConfig.is_open && (
+              {localConfig.is_open && (
                 <>
                   {/* Horários de funcionamento */}
                   <div className="grid grid-cols-2 gap-4">
@@ -234,8 +267,8 @@ const AdminCalendarConfig: React.FC = () => {
                       <Input
                         id="start-time"
                         type="time"
-                        value={currentConfig.start_time}
-                        onChange={(e) => updateDayConfig({ start_time: e.target.value })}
+                        value={localConfig.start_time}
+                        onChange={(e) => updateLocalConfig({ start_time: e.target.value })}
                       />
                     </div>
                     <div>
@@ -243,8 +276,8 @@ const AdminCalendarConfig: React.FC = () => {
                       <Input
                         id="end-time"
                         type="time"
-                        value={currentConfig.end_time}
-                        onChange={(e) => updateDayConfig({ end_time: e.target.value })}
+                        value={localConfig.end_time}
+                        onChange={(e) => updateLocalConfig({ end_time: e.target.value })}
                       />
                     </div>
                   </div>
@@ -253,8 +286,8 @@ const AdminCalendarConfig: React.FC = () => {
                   <div>
                     <Label htmlFor="interval">Intervalo entre consultas</Label>
                     <Select
-                      value={currentConfig.interval_minutes.toString()}
-                      onValueChange={(value) => updateDayConfig({ interval_minutes: parseInt(value) })}
+                      value={localConfig.interval_minutes.toString()}
+                      onValueChange={(value) => updateLocalConfig({ interval_minutes: parseInt(value) })}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -274,16 +307,16 @@ const AdminCalendarConfig: React.FC = () => {
                       <Input
                         type="time"
                         placeholder="Início"
-                        value={currentConfig.lunch_break_start || ''}
-                        onChange={(e) => updateDayConfig({
+                        value={localConfig.lunch_break_start || ''}
+                        onChange={(e) => updateLocalConfig({
                           lunch_break_start: e.target.value || undefined
                         })}
                       />
                       <Input
                         type="time"
                         placeholder="Fim"
-                        value={currentConfig.lunch_break_end || ''}
-                        onChange={(e) => updateDayConfig({
+                        value={localConfig.lunch_break_end || ''}
+                        onChange={(e) => updateLocalConfig({
                           lunch_break_end: e.target.value || undefined
                         })}
                       />
@@ -298,8 +331,8 @@ const AdminCalendarConfig: React.FC = () => {
                     </p>
                     <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
                       {timeSlots.map((time) => {
-                        const isBlocked = isTimeBlocked(time, currentConfig);
-                        const isManuallyBlocked = currentConfig.blocked_times.includes(time);
+                        const isBlocked = isTimeBlocked(time, localConfig);
+                        const isManuallyBlocked = localConfig.blocked_times.includes(time);
                         
                         return (
                           <Button
