@@ -5,7 +5,7 @@ import { ptBR } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { CheckCheck, Calendar, Clock } from 'lucide-react';
+import { CheckCheck, Calendar, Clock, Bell } from 'lucide-react';
 import { useNotifications } from '@/hooks/useNotifications';
 
 const NotificationsList: React.FC = () => {
