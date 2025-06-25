@@ -25,6 +25,14 @@ export const notificationService = {
     const message = `Agendamento para o dia ${formattedDate}, horário ${data.appointmentDetails.time}h foi ${action}`;
 
     try {
+      console.log('Creating notification for user:', data.userId);
+      console.log('Notification data:', { 
+        user_id: data.userId,
+        appointment_id: data.appointmentId,
+        type: data.type,
+        message: message
+      });
+
       const { data: notification, error } = await supabase
         .from('notifications')
         .insert({
@@ -41,6 +49,7 @@ export const notificationService = {
         throw error;
       }
 
+      console.log('Notification created successfully:', notification);
       return notification;
     } catch (error) {
       console.error('Error creating notification:', error);

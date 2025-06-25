@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,6 +22,7 @@ const AdminAppointmentRequests: React.FC = () => {
 
   const getUserIdFromPatientId = async (patientId: string) => {
     try {
+      console.log('Getting user data for patient:', patientId);
       const { data, error } = await supabase
         .from('patient_profiles')
         .select('user_id, email')
@@ -34,6 +34,7 @@ const AdminAppointmentRequests: React.FC = () => {
         return null;
       }
 
+      console.log('User data found:', data);
       return data;
     } catch (error) {
       console.error('Error getting user data:', error);
@@ -64,17 +65,25 @@ const AdminAppointmentRequests: React.FC = () => {
   const handleApproveAppointment = async (appointmentId: string) => {
     try {
       setProcessingId(appointmentId);
+      console.log('Approving appointment:', appointmentId);
       
       // Buscar dados do agendamento
       const appointment = appointments.find(app => app.id === appointmentId);
-      if (!appointment) return;
+      if (!appointment) {
+        console.error('Appointment not found:', appointmentId);
+        return;
+      }
+
+      console.log('Appointment found:', appointment);
 
       // Atualizar status do agendamento
       await updateAppointment(appointmentId, { status: 'confirmed' });
+      console.log('Appointment status updated to confirmed');
 
       // Buscar dados do usuário
       const userData = await getUserIdFromPatientId(appointment.patient_id);
       if (!userData) {
+        console.log('User data not found, showing success message without notification');
         toast.success('Agendamento confirmado!');
         return;
       }
@@ -83,6 +92,7 @@ const AdminAppointmentRequests: React.FC = () => {
       const clinicAddress = await getClinicAddress(appointment.clinic_id);
 
       // Criar notificação
+      console.log('Creating notification...');
       await notificationService.createNotification({
         userId: userData.user_id,
         appointmentId: appointmentId,
@@ -94,6 +104,7 @@ const AdminAppointmentRequests: React.FC = () => {
           serviceName: appointment.service_name
         }
       });
+      console.log('Notification created successfully');
 
       // Enviar email (simulado)
       await notificationService.sendEmailNotification({
@@ -112,8 +123,8 @@ const AdminAppointmentRequests: React.FC = () => {
       
       toast.success('Agendamento confirmado! Notificação enviada ao paciente.');
     } catch (error) {
-      toast.error('Erro ao confirmar agendamento');
       console.error('Error approving appointment:', error);
+      toast.error('Erro ao confirmar agendamento');
     } finally {
       setProcessingId(null);
     }
@@ -122,17 +133,25 @@ const AdminAppointmentRequests: React.FC = () => {
   const handleRejectAppointment = async (appointmentId: string) => {
     try {
       setProcessingId(appointmentId);
+      console.log('Rejecting appointment:', appointmentId);
       
       // Buscar dados do agendamento
       const appointment = appointments.find(app => app.id === appointmentId);
-      if (!appointment) return;
+      if (!appointment) {
+        console.error('Appointment not found:', appointmentId);
+        return;
+      }
+
+      console.log('Appointment found:', appointment);
 
       // Atualizar status do agendamento
       await updateAppointment(appointmentId, { status: 'cancelled' });
+      console.log('Appointment status updated to cancelled');
 
       // Buscar dados do usuário
       const userData = await getUserIdFromPatientId(appointment.patient_id);
       if (!userData) {
+        console.log('User data not found, showing success message without notification');
         toast.success('Agendamento recusado!');
         return;
       }
@@ -141,6 +160,7 @@ const AdminAppointmentRequests: React.FC = () => {
       const clinicAddress = await getClinicAddress(appointment.clinic_id);
 
       // Criar notificação
+      console.log('Creating notification...');
       await notificationService.createNotification({
         userId: userData.user_id,
         appointmentId: appointmentId,
@@ -152,6 +172,7 @@ const AdminAppointmentRequests: React.FC = () => {
           serviceName: appointment.service_name
         }
       });
+      console.log('Notification created successfully');
 
       // Enviar email (simulado)
       await notificationService.sendEmailNotification({
@@ -170,8 +191,8 @@ const AdminAppointmentRequests: React.FC = () => {
       
       toast.success('Agendamento recusado! Notificação enviada ao paciente.');
     } catch (error) {
-      toast.error('Erro ao recusar agendamento');
       console.error('Error rejecting appointment:', error);
+      toast.error('Erro ao recusar agendamento');
     } finally {
       setProcessingId(null);
     }
