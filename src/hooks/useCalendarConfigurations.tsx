@@ -45,6 +45,7 @@ export const useCalendarConfigurations = () => {
     } catch (error) {
       console.error('Error loading calendar configurations:', error);
       setConfigurations([]);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -72,7 +73,7 @@ export const useCalendarConfigurations = () => {
         throw error;
       }
 
-      console.log('Calendar configuration saved:', data);
+      console.log('Calendar configuration saved successfully:', data);
 
       // Atualizar estado local
       setConfigurations(prev => {
