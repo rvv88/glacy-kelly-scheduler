@@ -127,7 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         data: {
           full_name: fullName,
         },
-        emailRedirectTo: `${window.location.origin}/patients`
+        emailRedirectTo: `${window.location.origin}/patients/new`
       },
     });
     if (error) throw error;
@@ -137,7 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/patients`
+        redirectTo: `${window.location.origin}/patients/new`
       }
     });
     if (error) throw error;

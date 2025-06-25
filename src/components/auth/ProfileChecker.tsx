@@ -39,7 +39,7 @@ const ProfileChecker: React.FC<{ children: React.ReactNode }> = ({ children }) =
         // Se não tem perfil ou está incompleto, redirecionar
         if (!profile || !profile.name || !profile.cpf || !profile.phone) {
           toast.error('Complete seu cadastro em "Meus Dados" antes de agendar consultas.');
-          navigate('/profile');
+          navigate('/patients/new');
         }
       } catch (error) {
         console.error('Error checking profile:', error);
