@@ -191,7 +191,7 @@ const AdminCalendarConfig: React.FC = () => {
             <SelectContent>
               {clinics.map((clinic) => (
                 <SelectItem key={clinic.id} value={clinic.id}>
-                  {clinic.unit_name}
+                  {clinic.name}
                 </SelectItem>
               ))}
             </SelectContent>

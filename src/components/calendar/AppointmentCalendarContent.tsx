@@ -63,6 +63,10 @@ const AppointmentCalendarContent: React.FC<AppointmentCalendarContentProps> = ({
     onDateChange(today);
   };
 
+  const handleNewAppointment = () => {
+    onNewAppointment();
+  };
+
   if (loading) {
     return (
       <div className="flex-1 space-y-4">
@@ -111,7 +115,7 @@ const AppointmentCalendarContent: React.FC<AppointmentCalendarContentProps> = ({
                   </SelectItem>
                 </SelectContent>
               </Select>
-              <Button onClick={onNewAppointment} size="sm">
+              <Button onClick={handleNewAppointment} size="sm">
                 <Plus className="h-4 w-4 mr-2" />
                 Nova Consulta
               </Button>
@@ -167,7 +171,9 @@ const AppointmentCalendarContent: React.FC<AppointmentCalendarContentProps> = ({
         />
       ) : (
         <AppointmentListView
+          selectedDate={currentDate}
           appointments={appointmentsForDate}
+          loading={loading}
           isAdmin={isAdmin}
           onConfirmAppointment={onConfirmAppointment}
           onCancelAppointment={onCancelAppointment}
