@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -64,30 +64,35 @@ export const useAppointmentFormLogic = ({
   const watchClinicId = form.watch('clinicId');
   const watchDate = form.watch('date');
 
+  // Memoize the load function to prevent recreations
+  const loadTimeSlots = useCallback(async (clinicId: string, date: string) => {
+    if (!clinicId || !date) {
+      setAvailableTimeSlots([]);
+      return;
+    }
+
+    console.log('Loading time slots for:', { clinicId, date });
+    setLoadingTimeSlots(true);
+    
+    try {
+      const slots = await getAvailableTimeSlots(clinicId, date);
+      setAvailableTimeSlots(slots);
+      console.log('Time slots loaded:', slots);
+    } catch (error) {
+      console.error('Error loading available time slots:', error);
+      toast.error('Erro ao carregar horários disponíveis');
+      setAvailableTimeSlots([]);
+    } finally {
+      setLoadingTimeSlots(false);
+    }
+  }, [getAvailableTimeSlots]);
+
+  // Use effect with proper dependency array to prevent infinite loops
   React.useEffect(() => {
-    const loadTimeSlots = async () => {
-      if (watchClinicId && watchDate) {
-        setLoadingTimeSlots(true);
-        try {
-          const slots = await getAvailableTimeSlots(watchClinicId, watchDate);
-          setAvailableTimeSlots(slots);
-          console.log('Available time slots:', slots);
-        } catch (error) {
-          console.error('Error loading available time slots:', error);
-          toast.error('Erro ao carregar horários disponíveis');
-          setAvailableTimeSlots([]);
-        } finally {
-          setLoadingTimeSlots(false);
-        }
-      } else {
-        setAvailableTimeSlots([]);
-      }
-    };
+    loadTimeSlots(watchClinicId, watchDate);
+  }, [watchClinicId, watchDate, loadTimeSlots]);
 
-    loadTimeSlots();
-  }, [watchClinicId, watchDate, getAvailableTimeSlots]);
-
-  const onSubmit = async (data: AppointmentFormValues) => {
+  const onSubmit = useCallback(async (data: AppointmentFormValues) => {
     try {
       // Get selected patient, service, and clinic
       const selectedPatient = patients.find(p => p.id === data.patientId);
@@ -130,9 +135,9 @@ export const useAppointmentFormLogic = ({
       console.error('Error submitting form:', error);
       toast.error(error.message || 'Erro ao agendar consulta');
     }
-  };
+  }, [patients, services, clinics, userRole, saveAppointment, onClose, form]);
 
-  // Atualiza a duração quando o serviço é selecionado
+  // Memoize service selection effect
   const watchServiceId = form.watch('serviceId');
   React.useEffect(() => {
     if (watchServiceId) {
@@ -143,14 +148,15 @@ export const useAppointmentFormLogic = ({
     }
   }, [watchServiceId, services, form]);
 
-  // Atualiza clinicId quando selectedClinicId muda
+  // Memoize clinic selection effect
   React.useEffect(() => {
-    if (selectedClinicId) {
+    if (selectedClinicId && selectedClinicId !== form.getValues('clinicId')) {
       form.setValue('clinicId', selectedClinicId);
     }
   }, [selectedClinicId, form]);
 
-  return {
+  // Memoize return object to prevent unnecessary re-renders
+  return useMemo(() => ({
     form,
     services,
     clinics,
@@ -160,5 +166,15 @@ export const useAppointmentFormLogic = ({
     availableTimeSlots,
     loadingTimeSlots,
     onSubmit,
-  };
+  }), [
+    form,
+    services,
+    clinics,
+    patients,
+    patientsLoading,
+    userRole,
+    availableTimeSlots,
+    loadingTimeSlots,
+    onSubmit
+  ]);
 };

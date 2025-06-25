@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -21,7 +21,7 @@ export const useCalendarConfigurations = () => {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
 
-  const loadConfigurations = async (clinicId?: string, startDate?: string, endDate?: string) => {
+  const loadConfigurations = useCallback(async (clinicId?: string, startDate?: string, endDate?: string) => {
     try {
       setLoading(true);
       console.log('Loading calendar configurations for clinic:', clinicId);
@@ -47,9 +47,9 @@ export const useCalendarConfigurations = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const saveConfiguration = async (config: Partial<CalendarConfiguration> & { clinic_id: string; date: string }) => {
+  const saveConfiguration = useCallback(async (config: Partial<CalendarConfiguration> & { clinic_id: string; date: string }) => {
     try {
       console.log('Saving calendar configuration:', config);
 
@@ -88,10 +88,21 @@ export const useCalendarConfigurations = () => {
       console.error('Error saving calendar configuration:', error);
       throw error;
     }
-  };
+  }, []);
 
-  const getAvailableTimeSlots = async (clinicId: string, date: string): Promise<string[]> => {
+  // Cache para horários já carregados
+  const [timeSlotsCache, setTimeSlotsCache] = useState<Record<string, string[]>>({});
+
+  const getAvailableTimeSlots = useCallback(async (clinicId: string, date: string): Promise<string[]> => {
     try {
+      const cacheKey = `${clinicId}-${date}`;
+      
+      // Verificar cache primeiro
+      if (timeSlotsCache[cacheKey]) {
+        console.log('Returning cached time slots for:', cacheKey);
+        return timeSlotsCache[cacheKey];
+      }
+
       console.log('Getting available time slots for:', clinicId, date);
 
       // Gerar slots de 8:00 às 18:00 com intervalo de 30 minutos
@@ -107,15 +118,21 @@ export const useCalendarConfigurations = () => {
         }
       }
 
-      console.log('Generated time slots:', slots);
+      // Atualizar cache
+      setTimeSlotsCache(prev => ({
+        ...prev,
+        [cacheKey]: slots
+      }));
+
+      console.log('Generated and cached time slots:', slots);
       return slots;
     } catch (error) {
       console.error('Error getting available time slots:', error);
       return [];
     }
-  };
+  }, [timeSlotsCache]);
 
-  const checkTimeSlotAvailability = async (clinicId: string, date: string, time: string, duration: number = 30): Promise<boolean> => {
+  const checkTimeSlotAvailability = useCallback(async (clinicId: string, date: string, time: string, duration: number = 30): Promise<boolean> => {
     try {
       // Sempre retornar true para permitir qualquer horário
       console.log('Checking availability for:', { clinicId, date, time, duration });
@@ -124,14 +141,21 @@ export const useCalendarConfigurations = () => {
       console.error('Error checking time slot availability:', error);
       return true; // Retornar true mesmo em caso de erro
     }
-  };
+  }, []);
 
-  return {
+  return useMemo(() => ({
     configurations,
     loading,
     loadConfigurations,
     saveConfiguration,
     getAvailableTimeSlots,
     checkTimeSlotAvailability,
-  };
+  }), [
+    configurations,
+    loading,
+    loadConfigurations,
+    saveConfiguration,
+    getAvailableTimeSlots,
+    checkTimeSlotAvailability,
+  ]);
 };
