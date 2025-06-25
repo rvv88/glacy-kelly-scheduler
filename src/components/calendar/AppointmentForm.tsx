@@ -36,6 +36,7 @@ import { useClinics } from '@/hooks/useClinics';
 import { useAppointments } from '@/hooks/useAppointments';
 import { usePatients } from '@/hooks/usePatients';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useCalendarConfigurations } from '@/hooks/useCalendarConfigurations';
 
 const formSchema = z.object({
   patientId: z.string().min(1, { message: 'Selecione um paciente' }),
@@ -69,6 +70,10 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
   const { saveAppointment } = useAppointments();
   const { patients, loading: patientsLoading } = usePatients();
   const { userRole } = useUserRole();
+  const { getAvailableTimeSlots } = useCalendarConfigurations();
+  
+  const [availableTimeSlots, setAvailableTimeSlots] = React.useState<string[]>([]);
+  const [loadingTimeSlots, setLoadingTimeSlots] = React.useState(false);
   
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(formSchema),
@@ -82,6 +87,33 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
       notes: '',
     },
   });
+
+  // Watch for changes in clinic and date to load available time slots
+  const watchClinicId = form.watch('clinicId');
+  const watchDate = form.watch('date');
+
+  React.useEffect(() => {
+    const loadTimeSlots = async () => {
+      if (watchClinicId && watchDate) {
+        setLoadingTimeSlots(true);
+        try {
+          const slots = await getAvailableTimeSlots(watchClinicId, watchDate);
+          setAvailableTimeSlots(slots);
+          console.log('Available time slots:', slots);
+        } catch (error) {
+          console.error('Error loading available time slots:', error);
+          toast.error('Erro ao carregar horários disponíveis');
+          setAvailableTimeSlots([]);
+        } finally {
+          setLoadingTimeSlots(false);
+        }
+      } else {
+        setAvailableTimeSlots([]);
+      }
+    };
+
+    loadTimeSlots();
+  }, [watchClinicId, watchDate, getAvailableTimeSlots]);
 
   const onSubmit = async (data: AppointmentFormValues) => {
     try {
@@ -278,9 +310,30 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Horário</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      value={field.value}
+                      disabled={loadingTimeSlots || availableTimeSlots.length === 0}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={
+                            loadingTimeSlots 
+                              ? "Carregando horários..." 
+                              : availableTimeSlots.length === 0 
+                                ? "Nenhum horário disponível" 
+                                : "Selecione um horário"
+                          } />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {availableTimeSlots.map((timeSlot) => (
+                          <SelectItem key={timeSlot} value={timeSlot}>
+                            {timeSlot}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -307,7 +360,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
               </Button>
-              <Button type="submit">
+              <Button type="submit" disabled={loadingTimeSlots}>
                 {userRole === 'user' ? 'Solicitar Agendamento' : 'Agendar'}
               </Button>
             </DialogFooter>
