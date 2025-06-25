@@ -20,13 +20,13 @@ export interface CalendarConfiguration {
 
 export const useCalendarConfigurations = () => {
   const [configurations, setConfigurations] = useState<CalendarConfiguration[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const { user } = useAuth();
 
   const loadConfigurations = async (clinicId?: string) => {
     try {
       setLoading(true);
-      console.log('Loading calendar configurations...');
+      console.log('Loading calendar configurations for clinic:', clinicId);
 
       let query = supabase
         .from('calendar_configurations')
@@ -41,25 +41,39 @@ export const useCalendarConfigurations = () => {
 
       if (error) {
         console.error('Error loading calendar configurations:', error);
-        return;
+        throw error;
       }
 
       console.log('Calendar configurations loaded:', data);
       setConfigurations(data || []);
     } catch (error) {
       console.error('Error loading calendar configurations:', error);
+      setConfigurations([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const saveConfiguration = async (config: Omit<CalendarConfiguration, 'id' | 'created_at' | 'updated_at'>) => {
+  const saveConfiguration = async (config: Partial<CalendarConfiguration> & { clinic_id: string; date: string }) => {
     try {
       console.log('Saving calendar configuration:', config);
 
+      // Preparar dados para inserção/atualização
+      const configData = {
+        clinic_id: config.clinic_id,
+        date: config.date,
+        is_open: config.is_open ?? true,
+        start_time: config.start_time ?? '08:00',
+        end_time: config.end_time ?? '18:00',
+        interval_minutes: config.interval_minutes ?? 30,
+        lunch_break_start: config.lunch_break_start || null,
+        lunch_break_end: config.lunch_break_end || null,
+        blocked_times: config.blocked_times ?? []
+      };
+
       const { data, error } = await supabase
         .from('calendar_configurations')
-        .upsert(config, {
+        .upsert(configData, {
           onConflict: 'clinic_id,date'
         })
         .select()
@@ -72,11 +86,13 @@ export const useCalendarConfigurations = () => {
 
       console.log('Calendar configuration saved:', data);
 
-      // Update local state
+      // Atualizar estado local
       setConfigurations(prev => {
         const existing = prev.find(c => c.clinic_id === config.clinic_id && c.date === config.date);
         if (existing) {
-          return prev.map(c => c.id === existing.id ? data : c);
+          return prev.map(c => 
+            (c.clinic_id === config.clinic_id && c.date === config.date) ? data : c
+          );
         } else {
           return [...prev, data];
         }

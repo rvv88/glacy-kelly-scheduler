@@ -23,12 +23,12 @@ const AdminCalendarConfig: React.FC = () => {
   const { configurations, loading: configLoading, saveConfiguration, loadConfigurations } = useCalendarConfigurations();
   
   // Configuração padrão para novos dias
-  const defaultConfig: Omit<CalendarConfiguration, 'id' | 'clinic_id' | 'date' | 'created_at' | 'updated_at'> = {
+  const defaultConfig = {
     is_open: true,
     start_time: '08:00',
     end_time: '18:00',
     interval_minutes: 30,
-    blocked_times: [],
+    blocked_times: [] as string[],
     lunch_break_start: '12:00',
     lunch_break_end: '13:00'
   };
@@ -37,26 +37,33 @@ const AdminCalendarConfig: React.FC = () => {
   const [localConfig, setLocalConfig] = useState<CalendarConfiguration | null>(null);
 
   useEffect(() => {
+    console.log('Selected clinic changed:', selectedClinicId);
     if (selectedClinicId) {
       loadConfigurations(selectedClinicId);
     }
   }, [selectedClinicId]);
 
   useEffect(() => {
+    console.log('Date or clinic changed:', selectedDate, selectedClinicId);
     if (selectedDate && selectedClinicId) {
       const dateKey = format(selectedDate, 'yyyy-MM-dd');
       const existing = configurations.find(config => 
         config.clinic_id === selectedClinicId && config.date === dateKey
       );
       
-      const config = existing || { 
-        ...defaultConfig, 
-        id: '', 
-        clinic_id: selectedClinicId, 
-        date: dateKey 
-      };
+      console.log('Found existing config:', existing);
       
-      setLocalConfig(config);
+      if (existing) {
+        setLocalConfig(existing);
+      } else {
+        const newConfig: CalendarConfiguration = { 
+          ...defaultConfig, 
+          id: '', 
+          clinic_id: selectedClinicId, 
+          date: dateKey 
+        };
+        setLocalConfig(newConfig);
+      }
     }
   }, [selectedDate, selectedClinicId, configurations]);
 
@@ -150,11 +157,23 @@ const AdminCalendarConfig: React.FC = () => {
     return false;
   };
 
-  if (!localConfig) {
-    return <div>Carregando...</div>;
+  if (clinicsLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
   }
 
-  const timeSlots = generateTimeSlots(localConfig);
+  if (!localConfig && selectedClinicId && selectedDate) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  const timeSlots = localConfig ? generateTimeSlots(localConfig) : [];
 
   return (
     <div className="space-y-6">
@@ -167,7 +186,7 @@ const AdminCalendarConfig: React.FC = () => {
         </div>
         <Button 
           onClick={handleSaveConfiguration}
-          disabled={isLoading || !selectedClinicId}
+          disabled={isLoading || !selectedClinicId || !localConfig}
           className="flex items-center gap-2"
         >
           <Save className="h-4 w-4" />
@@ -199,7 +218,7 @@ const AdminCalendarConfig: React.FC = () => {
         </CardContent>
       </Card>
 
-      {selectedClinicId && (
+      {selectedClinicId && localConfig && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Calendário */}
           <Card>
